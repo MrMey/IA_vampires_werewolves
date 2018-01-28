@@ -8,6 +8,7 @@ Created on Fri Jan 26 11:37:26 2018
 import socket
 import time
 import os
+import struct
 
 class Connector:
     def __init__(self,ip,port):
@@ -46,35 +47,35 @@ class Connector:
         raise Exception("unknown command")
     
     def receive_SET(self):
-        n = self.sock.recv(1).decode()
-        m = self.sock.recv(1).decode()
+        n = struct.unpack("1B",self.sock.recv(1))[0]
+        m = struct.unpack("1B",self.sock.recv(1))[0]
         print(("SET",(n,m)))
         return ("SET",(n,m))
     
     def receive_HUM(self):
-        n = int(self.sock.recv(1).decode())
+        n = struct.unpack("1B",self.sock.recv(1))[0]
         coord = []
         for i in range(n):
-            coord += [int(self.sock.recv(1).decode())]
-            coord += [int(self.sock.recv(1).decode())]
+            coord += [struct.unpack("1B",self.sock.recv(1))[0]]
+            coord += [struct.unpack("1B",self.sock.recv(1))[0]]
         print(("HUM",(n,coord)))
         return ("HUM",(n,coord))
 
     def receive_HME(self):
-        x = int(self.sock.recv(1).decode())
-        y = int(self.sock.recv(1).decode())
+        x = struct.unpack("1B",self.sock.recv(1))[0]
+        y = struct.unpack("1B",self.sock.recv(1))[0]
         print(("HME",(x,y)))
         return ("HME",(x,y))
     
     def receive_UPD(self):
-        n = int(self.sock.recv(1).decode())
+        n = struct.unpack("1B",self.sock.recv(1))[0]
         changes = []
         for i in range(n):
-            x = int(self.sock.recv(1).decode())
-            y = int(self.sock.recv(1).decode())
-            h = int(self.sock.recv(1).decode())
-            v = int(self.sock.recv(1).decode())
-            l = int(self.sock.recv(1).decode())
+            x = struct.unpack("1B",self.sock.recv(1))[0]
+            y = struct.unpack("1B",self.sock.recv(1))[0]
+            h = struct.unpack("1B",self.sock.recv(1))[0]
+            v = struct.unpack("1B",self.sock.recv(1))[0]
+            l = struct.unpack("1B",self.sock.recv(1))[0]
             changes += [(x,y,h,v,l)]
         print(("UPD",(n,changes)))
         return ("UPD",(n,changes))
@@ -84,15 +85,14 @@ class Connector:
      
     def receive_BYE(self):
         return ("BYE")
-        
+       
     
 if __name__ == "__main__":    
-    #os.popen("VampiresVSWerewolvesGameServer.exe")
+    os.popen("VampiresVSWerewolvesGameServer.exe")
     time.sleep(1)
     connect = Connector("127.0.0.1",5555)
-    time.sleep(1)
-    connect.send("NME4paul".encode())
-    time.sleep(1)
+    connect.send("NME".encode()+struct.pack("1B",4)+"paul".encode())
+    connect.receive()
     connect.receive()
     connect.receive()
     connect.receive()
