@@ -16,13 +16,15 @@ class Connector:
         self.sock.connect((ip, port))
         self.sock.settimeout(10)
         self.name = name
+        self.connected = True
         print(self.sock)
-        self.connect.send("NME".encode()+struct.pack("1B",len(name))+name.encode())
+
         
     def stop(self):
         if self.sock:
             self.sock.close()
-
+        self.connected = False
+        
     def send(self,trame):
         print("sending")
         self.sock.send(trame)
@@ -49,8 +51,8 @@ class Connector:
         raise Exception("unknown command")
     
     def receive_SET(self):
-        n = struct.unpack("1B",self.sock.recv(1))[0]
-        m = struct.unpack("1B",self.sock.recv(1))[0]
+        n = int(struct.unpack("1B",self.sock.recv(1))[0])
+        m = int(struct.unpack("1B",self.sock.recv(1))[0])
         print(("SET",(n,m)))
         return ("SET",(n,m))
     
@@ -78,16 +80,19 @@ class Connector:
             h = struct.unpack("1B",self.sock.recv(1))[0]
             v = struct.unpack("1B",self.sock.recv(1))[0]
             l = struct.unpack("1B",self.sock.recv(1))[0]
-            changes += [(x,y,h,v,l)]
+            changes += [x,y,h,v,l]
         print(("UPD",(n,changes)))
         return ("UPD",(n,changes))
     
     def receive_END(self):
+        self.connected = False
         return ("END")
      
     def receive_BYE(self):
+        self.connected = False
         return ("BYE")
-       
+
+  
     
 if __name__ == "__main__":    
     os.popen("VampiresVSWerewolvesGameServer.exe")
