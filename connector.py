@@ -11,12 +11,14 @@ import os
 import struct
 
 class Connector:
-    def __init__(self,ip,port):
+    def __init__(self,ip,port,name = 'paul'):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((ip, port))
         self.sock.settimeout(10)
+        self.name = name
         print(self.sock)
-
+        self.connect.send("NME".encode()+struct.pack("1B",len(name))+name.encode())
+        
     def stop(self):
         if self.sock:
             self.sock.close()
