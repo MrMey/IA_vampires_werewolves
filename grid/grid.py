@@ -113,8 +113,9 @@ class Grid:
             return True
         else:
             return False
-
-    def get_closest_points(self, srce, dest):
+    
+    @staticmethod
+    def get_closest_points(srce, dest):
         moves = []
         if srce[0] < dest[0]:
             if srce[1] < dest[1]:
@@ -153,23 +154,6 @@ class Grid:
         for ennemy in self.ennemies:
             cells += self.get_range(ennemy)
         return cells
-
-    def get_closest_point(self, srce, dest, avoid_ennemies = False):
-        if avoid_ennemies:
-            offsets = self.get_closest_points(srce,dest)
-            idx = 0
-            while ([srce[0] + offsets[idx][0], srce[1] + offsets[idx][1]] not in self.get_range(srce) or [srce[0] + offsets[idx][0], srce[1] + offsets[idx][1]] in self.get_ennemy_range()) and  idx < len(offsets)-1:
-                idx += 1
-            return srce[0] + offsets[idx][0], srce[1] + offsets[idx][1]
-        else:
-            if srce[0] < dest[0]:
-                return srce[0] + 1, srce[1]
-            elif srce[0] > dest[0]:
-                return srce[0] - 1, srce[1]
-            elif srce[1] < dest[1]:
-                return srce[0], srce[1] + 1
-            else:
-                return srce[0], srce[1] - 1
 
     def compute_heuristic_simple(self, humans, allies, ennemies):
         fitness = 0
