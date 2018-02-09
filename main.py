@@ -7,7 +7,7 @@ Created on Fri Feb  2 11:29:05 2018
 
 from connector import Connector
 from grid.grid import Grid
-from .decision import Actor
+from decision import Actor
 
 import os
 import time

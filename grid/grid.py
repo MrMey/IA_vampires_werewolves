@@ -1,17 +1,11 @@
-import numpy as np
-
-NON = 0
-HUM = 1
-VAM = 2
-WOL = 3
 
 class Grid:
     def __init__(self, height, width):
         self._height = height
         self._width = width
-        self.allies = []
-        self.humans = []
-        self.ennemies = []
+        self.allies = {}
+        self.humans = {}
+        self.enemies = {}
 
     def _get_width(self):
         return self._width
@@ -31,56 +25,57 @@ class Grid:
                 print(position)
                 self.update_group(*position)
 
+    def delete_key(self, dico, key):
+        try:
+            del dico[key]
+        except KeyError:
+            pass
+
+    def get_key(self, dico, key):
+        try:
+            return dico[key]
+        except KeyError:
+            return 0
+
     def update_group(self, x, y, nb_hum, nb_vam, nb_wol):
         if nb_hum == nb_vam == nb_wol == 0:
-            if (x,y) in self.allies:
-                self.allies.pop((x,y))
-            elif (x,y) in self.humans:
-                self.humans.pop((x,y))
-            elif (x,y) in self.ennemies:
-                self.ennemies.pop((x,y))
+            self.delete_key(self.allies, (x,y))
+            self.delete_key(self.humans, (x,y))
+            self.delete_key(self.enemies, (x,y))
 
         elif nb_hum > 0:
             self.humans[(x,y)] = nb_hum
-            if (x,y) in self.allies:
-                self.allies.pop((x,y))
-            elif (x,y) in self.ennemies:
-                self.ennemies.pop((x,y))
+            self.delete_key(self.allies, (x,y))
+            self.delete_key(self.enemies, (x,y))
 
         elif nb_vam > 0:
             self.allies[(x,y)] = nb_vam
-            if (x,y) in self.humans:
-                self.humans.pop((x,y))
-            elif (x,y) in self.ennemies:
-                self.ennemies.pop((x,y))
+            self.delete_key(self.humans, (x,y))
+            self.delete_key(self.enemies, (x,y))
 
         elif nb_wol > 0:
-            self.ennemies[(x,y)] = nb_wol
-            if (x,y) in self.humans:
-                self.humans.pop((x,y))
-            elif (x,y) in self.allies:
-                self.allies.pop((x,y))
+            self.enemies[(x, y)] = nb_wol
+            self.delete_key(self.humans, (x,y))
+            self.delete_key(self.allies, (x,y))
 
     def get_group_at(self, x, y):
         """Return the number of members in a cell"""
-        if (x,y) in self.humans:
-            return self.humans[(x,y)]
-        elif (x,y) in self.allies:
-            return self.allies[(x,y)]
-        elif (x,y) in self.ennemies:
-            return self.ennemies[(x,y)]
+        hum = self.get_key(self.humans, (x,y))
+        al = self.get_key(self.allies, (x,y))
+        en = self.get_key(self.enemies, (x,y))
+        return max(hum, al, en)
 
     def get_number_of(self, species):
         count = 0
-        if species == HUM:
+        if species == 'HUM':
             for hu in self.humans:
                 count += self.humans[hu]
-        elif species == VAM:
+        elif species == 'VAM':
             for ally in self.allies:
                 count += self.allies[ally]
-        elif species == WOL:
-            for ennemy in self.ennemies:
-                count += self.ennemies[ennemy]
+        elif species == 'WOL':
+            for enemy in self.enemies:
+                count += self.enemies[enemy]
         return count
 
     def get_distance(self, srce, dest):
@@ -127,10 +122,10 @@ class Grid:
                 cells += [[x, y]]
         return cells
 
-    def get_ennemy_range(self):
+    def get_enemy_range(self):
         cells = []
-        for ennemy in self.ennemies:
-            cells += ennemy
+        for enemy in self.enemies:
+            cells += enemy
         return cells
 
     """def compute_heuristic_simple(self, humans, allies, ennemies):
