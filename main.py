@@ -15,13 +15,15 @@ import struct
 
 EMULATE_SERVER = True
 
+#Set parameter for actions : 1 for greedy, 2 for alpha-beta
+algorithm = 1
 
 def execute(name):
-    actor = Actor()
-    conn = Connector("127.0.0.1", 5555)
+    actor = Actor(algorithm)
+    conn = Connector("127.0.0.1",5555)
 
     # envoit sequence NME
-    conn.send("NME".encode()+struct.pack("1B", len(name))+name.encode())
+    conn.send("NME".encode()+struct.pack("1B",len(name))+name.encode())
 
     # recoit commande SET
     Set = conn.receive()
@@ -42,10 +44,10 @@ def execute(name):
 
         # ecoute le serveur
         order = conn.receive()
+
         if order[0] == "UPD":
             #update la grille
             grid.update_all_groups(order[1])
-            print("map {}".format([grid.height,grid.width]))
         elif order[0] == "BYE":
             # to do clean break
             break
@@ -61,7 +63,7 @@ def execute(name):
         # vider la file d'action pour prochain tour
         actor.clean_moves()
         # attendre une seconde pour visualiser sur .exe
-        time.sleep(2)
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
