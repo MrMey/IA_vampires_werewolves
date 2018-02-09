@@ -118,14 +118,14 @@ class Grid:
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if 0 <= x < self.height and 0 <= y < self.width:
+            if 0 <= y < self.height and 0 <= x < self.width:
                 cells += [[x, y]]
         return cells
 
     def get_enemy_range(self):
         cells = []
         for enemy in self.enemies:
-            cells += enemy
+            cells += self.get_range(enemy)
         return cells
 
     """def compute_heuristic_simple(self, humans, allies, ennemies):

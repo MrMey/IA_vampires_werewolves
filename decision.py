@@ -20,13 +20,19 @@ class Actor:
             print("allies: {}".format(grid.allies))
             print("enemies: {}".format(grid.enemies))
             if self.algorithm == 1:
-                humans = sorted([ (get_distance(ally, hu),hu) for hu in grid.humans ], key=itemgetter(0))
-                dest = get_closest_point(grid,ally,humans[0][1],True)
+                if len(grid.humans) > 0:
+                    humans = sorted([ (get_distance(ally, hu),hu) for hu in grid.humans], key=itemgetter(0))
+                    target = humans[0][1]
+                    dest = get_closest_point(grid, ally, target, True)
+                else:
+                    target = list(grid.enemies.keys())[0]
+                    dest = get_closest_point(grid, ally, target, False)
+
             elif self.algorithm == 2:
                 #dest = ...
                 pass #to link with alpha beta algo
             print("dest : {}".format(dest))
-            move = [ally[1],ally[0],grid.get_group_at(ally[1],ally[0]),dest[1],dest[0]]
+            move = [ally[0],ally[1],grid.get_group_at(ally[0],ally[1]),dest[0],dest[1]]
             print("move : {}".format(move))
             self.queue.append(move)
             
