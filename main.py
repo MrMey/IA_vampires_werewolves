@@ -47,6 +47,7 @@ while conn.connected:
     if order[0] == "UPD":
         #update la grille
         grid.update_all_groups(order[1])
+        print("map {}".format([grid.height,grid.width]))
     elif order[0] == "BYE":
         # to do clean break
         break
@@ -62,7 +63,7 @@ while conn.connected:
     # vider la file d'action pour prochain tour
     actor.clean_moves()
     # attendre une seconde pour visualiser sur .exe
-    time.sleep(1)
+    time.sleep(2)
 
 
 
