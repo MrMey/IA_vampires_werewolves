@@ -7,14 +7,17 @@ Created on Fri Feb  2 11:29:05 2018
 
 from connector import Connector
 from grid.grid import Grid
-from decision import Actor
+from .decision import Actor
 
 import os
 import time
 import struct
 
 
-actor = Actor()
+#Set parameter for actions : 1 for greedy, 2 for alpha-beta
+algorithm = 1
+
+actor = Actor(algorithm)
 
 os.popen("VampiresVSWerewolvesGameServer.exe")
 
