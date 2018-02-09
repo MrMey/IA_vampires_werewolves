@@ -20,6 +20,7 @@ class Actor:
             if self.algorithm == 1:
                 dest = get_closest_point(grid,ally,grid.humans[0],True)
             elif self.algorithm == 2:
+                #dest = ...
                 pass #to link with alpha beta algo
             print("dest : {}".format(dest))
             move = [ally[1],ally[0],grid.get_group_at(ally[1],ally[0]).number,dest[1],dest[0]]
