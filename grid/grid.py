@@ -71,7 +71,7 @@ class Grid:
             if [y,x] not in self.humans:
                 self.humans.append([y, x])
             if [y,x] in self.allies:
-                self.humans.remove([y, x])
+                self.allies.remove([y, x])
             if [y,x] in self.ennemies:
                 self.ennemies.remove([y, x])
         elif nb_vam > 0:

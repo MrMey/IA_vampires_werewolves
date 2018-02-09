@@ -15,12 +15,12 @@ class Actor:
             print("humans: {}".format(grid.humans))
             print("allies: {}".format(grid.allies))
             print("ennemies: {}".format(grid.ennemies))
-            dest = grid.get_closest_point(ally,grid.humans[0],True)
+            dest = grid.get_closest_point(ally,grid.humans[0], True)
             print("dest : {}".format(dest))
-            move = [ally[1],ally[0],grid.get_group_at(ally[1],ally[0]).number,dest[1],dest[0]]
+            move = [ally[1],ally[0],grid.get_group_at(ally[1], ally[0]).number, dest[1], dest[0]]
             print("move : {}".format(move))
             self.queue.append(move)
-            
+
     def send_moves(self):
         paquet = bytes()
         paquet += 'MOV'.encode()

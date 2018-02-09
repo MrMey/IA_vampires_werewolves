@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.pyc
 
+# csv files
+*.csv
+
 #idea files
 .idea/
 
