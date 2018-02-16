@@ -49,7 +49,7 @@ def execute(name, algorithm = 1):
 
         if order[0] == "UPD":
             #update la grille
-            grid.update_all_groups(order[1])
+            grid.update_map(order[1])
         elif order[0] == "BYE":
             # to do clean break
             break

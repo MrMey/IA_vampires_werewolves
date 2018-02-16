@@ -6,6 +6,7 @@ class Grid:
         self.vampires = {}
         self.humans = {}
         self.wolves = {}
+        self.locked_cell = []
 
     def set_species(self,species):
         if species not in ['wolves','vampires']:
@@ -78,6 +79,10 @@ class Grid:
                 print(position)
                 self.update_group(*position)
 
+    def update_map(self,content):
+        self.clean_locked_cell()
+        self.update_all_groups(content)
+
     def initiate_all_groups(self, content, ally_start):
         n = content[0]
         if n != 0:
@@ -117,12 +122,6 @@ class Grid:
 
     def get_distance(self, srce, dest):
         return abs(dest[0]-srce[0])+abs(dest[1]-srce[1])
-
-    def is_reachable(self, srce, dest):
-        if [abs(srce[0] - dest[0]), abs(srce[1]-dest[1])] in [[1, 1], [1, 0], [0, 1], [1, 1], [0, 0]]:
-            return True
-        else:
-            return False
     
     @staticmethod
     def get_closest_points(srce, dest):
@@ -155,9 +154,21 @@ class Grid:
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if 0 <= y < self.height and 0 <= x < self.width:
+            if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
                 cells += [[x, y]]
         return cells
+
+    def is_in_map(self, pos):
+        return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
+
+    def is_locked_cell(self,pos):
+        return pos in self.locked_cell
+
+    def add_locked_cell(self,pos):
+        self.locked_cell += [pos]
+
+    def clean_locked_cell(self):
+        self.locked_cell = []
 
     def get_enemy_range(self):
         cells = []
