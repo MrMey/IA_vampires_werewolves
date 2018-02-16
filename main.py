@@ -15,10 +15,13 @@ import struct
 
 EMULATE_SERVER = True
 
-#Set parameter for actions : 1 for greedy, 2 for alpha-beta
-algorithm = 1
+def execute(name, algorithm = 1):
+    """
 
-def execute(name):
+    :param name: name of the ai
+    :param algorithm: 1 for greedy, 2 for alpha-beta
+    :return:
+    """
     actor = Actor(algorithm)
     conn = Connector("127.0.0.1",5555)
 
@@ -30,15 +33,14 @@ def execute(name):
     # initialise la carte
     grid = Grid(Set[1][0],Set[1][1])
 
-    # recoit HME --inutile mais il faut quand même le recevoir
+    # recoit HUM --inutile mais il faut quand même le recevoir
     conn.receive()
-    # recoit HME --inutile mais il faut quand même le recevoir
-    conn.receive()
+    # recoit HME -- utile pour identifier son espèce
+    hme = conn.receive()
 
     #
     Map = conn.receive()
-    grid.update_all_groups(Map[1])
-
+    grid.initiate_all_groups(Map[1],hme[1])
     # tant que la partie est active
     while conn.connected:
 

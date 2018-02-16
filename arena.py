@@ -8,19 +8,20 @@ import re
 from threading import Thread
 
 ai_list = {'1': {'name': 'paul',
-                 'strategy': 'greedy'},
+                 'strategy': 1},
            '2': {'name': 'jean',
-                 'strategy': 'greedy'}
+                 'strategy': 1}
            }
 
 
 class AiThread(Thread):
-    def __init__(self,name):
+    def __init__(self,ai_dict):
         Thread.__init__(self)
-        self.name = name
+        self.name = ai_dict["name"]
+        self.strategy = ai_dict["strategy"]
 
     def run(self):
-        main.execute(self.name)
+        main.execute(self.name,self.strategy)
 
 def analyse_games(ai1,ai2,log_list):
 
@@ -46,8 +47,8 @@ for ai1 in ai_list:
         print(ai1,ai2)
         old_files = os.listdir(os.getcwd())
         os.popen("VampiresVSWerewolvesGameServer.exe")
-        thread1 = AiThread(ai_list[ai1]['name'])
-        thread2 = AiThread(ai_list[ai2]['name'])
+        thread1 = AiThread(ai_list[ai1])
+        thread2 = AiThread(ai_list[ai2])
 
         thread1.start()
         thread2.start()
