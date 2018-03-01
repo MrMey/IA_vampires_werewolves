@@ -67,31 +67,31 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies):
                 # si l'enemi est fort -> on abandonne d'aller convertir la maison dans cette direction
                 # car un déplacement vers elle nous ferait tuer le groupe
                 if enemies[(i_new, j_new)] * 1.5 < allies[group]:
-                    moves.append((i_new, j_new))
+                    moves.append((i_new, j_new, allies[group]))
                 elif enemies[(i_new, j_new)] < 1.5 * allies[group] < 1.5 * 1.5 * enemies[(i_new, j_new)]:
                     (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
                     if not((i1, j1) in just_around["humans"]):
                         if (i1, j1) in just_around["enemies"]:
                             if enemies[(i1, j1)] * 1.5 < allies[group]:
-                                moves.append((i1, j1))
+                                moves.append((i1, j1, allies[group]))
                         else:
-                            moves.append((i1, j1))
+                            moves.append((i1, j1, allies[group]))
                     if not((i2, j2) in just_around["humans"]):
                         if (i2, j2) in just_around["enemies"]:
                             if enemies[(i2, j2)] * 1.5 < allies[group]:
-                                moves.append((i2, j2))
+                                moves.append((i2, j2, allies[group]))
                         else:
-                            moves.append((i1, j1))
+                            moves.append((i1, j1, allies[group]))
             elif (i_new, j_new) in just_around["humans"]:
                 # le groupe d'humain est forcément trop grand pour être converti,
                 # sinon le résultat aurait déjà été renvoyé
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
                 if not (i1, j1) in just_around["humans"]:
-                    moves.append((i1, j1))
+                    moves.append((i1, j1, allies[group]))
                 if not (i2, j2) in just_around["humans"]:
-                    moves.append((i2, j2))
+                    moves.append((i2, j2, allies[group]))
             else:
-                moves.append((i_new, j_new))
+                moves.append((i_new, j_new, allies[group]))
     elif strategy == "attack":
         target = find_closest(group, enemies, 1.5, 3, allies)
     elif strategy == "flee":
