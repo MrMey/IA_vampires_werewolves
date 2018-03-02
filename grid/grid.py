@@ -1,50 +1,74 @@
-import numpy as np
-
-NON = 0
-HUM = 1
-VAM = 2
-WOL = 3
-
-
-class Group:
-    def __init__(self, species, number):
-        self._species = species
-        self._number = number
-
-    def _get_number(self):
-        return self._number
-
-    def _set_number(self, number):
-        self._number = number
-
-    def _get_species(self):
-        return self._species
-
-    def _set_species(self, species):
-        self._species = species
-
-    number = property(_get_number, _set_number)
-    species = property(_get_species, _set_species)
-
 
 class Grid:
     def __init__(self, height, width):
-        self._grid = np.empty((height, width), Group)
-        for i in range(height):
-            for j in range(width):
-                self._grid[i, j] = Group(NON, 0)
-        self.allies = []
-        self.humans = []
-        self.ennemies = []
+        self._height = height
+        self._width = width
+        self.vampires = {}
+        self.humans = {}
+        self.wolves = {}
+        self.locked_cell = []
+
+    def set_species(self,species):
+        if species not in ['wolves','vampires']:
+            raise ValueError('species must be wolves or vampires')
+        self.species = species
+
+    def _get_allies(self):
+        if self.species == "wolves":
+            return self.wolves
+        else:
+            return self.vampires
+    allies = property(_get_allies)
+
+    def _get_enemies(self):
+        if self.species == "wolves":
+            return self.vampires
+        else:
+            return self.wolves
+
+    enemies = property(_get_enemies)
 
     def _get_width(self):
-        return self._grid.shape[1]
+        return self._width
 
     def _get_height(self):
-        return self._grid.shape[0]
+        return self._height
 
     width = property(_get_width)
     height = property(_get_height)
+
+    def delete_key(self, dico, key):
+        try:
+            del dico[key]
+        except KeyError:
+            pass
+
+    def get_key(self, dico, key):
+        try:
+            return dico[key]
+        except KeyError:
+            return 0
+
+    def update_group(self, x, y, nb_hum, nb_vam, nb_wol):
+        if nb_hum == nb_vam == nb_wol == 0:
+            self.delete_key(self.vampires, (x,y))
+            self.delete_key(self.humans, (x,y))
+            self.delete_key(self.wolves, (x,y))
+
+        elif nb_hum > 0:
+            self.humans[(x,y)] = nb_hum
+            self.delete_key(self.vampires, (x,y))
+            self.delete_key(self.wolves, (x,y))
+
+        elif nb_vam > 0:
+            self.vampires[(x,y)] = nb_vam
+            self.delete_key(self.humans, (x,y))
+            self.delete_key(self.wolves, (x,y))
+
+        elif nb_wol > 0:
+            self.wolves[(x, y)] = nb_wol
+            self.delete_key(self.humans, (x,y))
+            self.delete_key(self.vampires, (x,y))
 
     def update_all_groups(self,content):
         n = content[0]
@@ -55,64 +79,49 @@ class Grid:
                 print(position)
                 self.update_group(*position)
 
-    def update_group(self, x, y, nb_hum, nb_vam, nb_wol):
-        if nb_hum == nb_vam == nb_wol == 0:
-            self._grid[y, x].species = NON
-            self._grid[y, x].number = 0
-            if [y,x] in self.allies:
-                self.allies.remove([y, x])
-            if [y,x] in self.humans:
-                self.humans.remove([y, x])
-            if [y,x] in self.ennemies:
-                self.ennemies.remove([y, x])
-        elif nb_hum > 0:
-            self._grid[y, x].species = HUM
-            self._grid[y, x].number = nb_hum
-            if [y,x] not in self.humans:
-                self.humans.append([y, x])
-            if [y,x] in self.allies:
-                self.humans.remove([y, x])
-            if [y,x] in self.ennemies:
-                self.ennemies.remove([y, x])
-        elif nb_vam > 0:
-            self._grid[y, x].species = VAM
-            self._grid[y, x].number = nb_vam
-            if [y,x] not in self.allies:
-                self.allies.append([y, x])
-            if [y,x] in self.humans:
-                self.humans.remove([y, x])
-            if [y,x] in self.ennemies:
-                self.ennemies.remove([y, x])
-        else:
-            self._grid[y, x].species = WOL
-            self._grid[y, x].number = nb_wol
-            if [y,x] not in self.ennemies:
-                self.ennemies.append([y, x])
-            if [y,x] in self.humans:
-                self.humans.remove([y, x])
-            if [y,x] in self.allies:
-                self.ennemies.remove([y, x])
+    def update_map(self,content):
+        self.clean_locked_cell()
+        self.update_all_groups(content)
+
+    def initiate_all_groups(self, content, ally_start):
+        n = content[0]
+        if n != 0:
+            liste = content[1]
+            for i in range(0, n):
+                position = [x for x in liste[i * 5:i * 5 + 5]]
+                if (position[0], position[1]) == ally_start:
+                    if position[3] != 0:
+                        self.set_species('vampires')
+                    elif position[4] != 0:
+                        self.set_species('wolves')
+                    else:
+                        raise Exception("did not find our species")
+
+                print(position)
+                self.update_group(*position)
 
     def get_group_at(self, x, y):
-        return self._grid[y, x]
+        """Return the number of members in a cell"""
+        hum = self.get_key(self.humans, (x,y))
+        al = self.get_key(self.vampires, (x,y))
+        en = self.get_key(self.wolves, (x,y))
+        return max(hum, al, en)
 
     def get_number_of(self, species):
         count = 0
-        for i in range(self._grid.shape[0]):
-            for j in range(self._grid.shape[1]):
-                group = self._grid[i, j]
-                if group.species == species:
-                    count += group.number
+        if species == 'HUM':
+            for hu in self.humans:
+                count += self.humans[hu]
+        elif species == 'VAM':
+            for vampire in self.vampires:
+                count += self.vampires[vampire]
+        elif species == 'WOL':
+            for wolf in self.wolves:
+                count += self.wolves[wolf]
         return count
 
     def get_distance(self, srce, dest):
         return abs(dest[0]-srce[0])+abs(dest[1]-srce[1])
-
-    def is_reachable(self,srce,dest):
-        if [abs(srce[0] - dest[0]),abs(srce[1]-dest[1])] in [[1,1],[1,0],[0,1],[1,1],[0,0]]:
-            return True
-        else:
-            return False
     
     @staticmethod
     def get_closest_points(srce, dest):
@@ -145,57 +154,30 @@ class Grid:
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if 0 <= x < self.height and 0 <= y < self.width:
+            if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
                 cells += [[x, y]]
         return cells
 
-    def get_ennemy_range(self):
+    def is_in_map(self, pos):
+        return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
+
+    def is_locked_cell(self,pos):
+        return pos in self.locked_cell
+
+    def add_locked_cell(self,pos):
+        self.locked_cell += [pos]
+
+    def clean_locked_cell(self):
+        self.locked_cell = []
+
+    def get_enemy_range(self):
         cells = []
-        for ennemy in self.ennemies:
-            cells += self.get_range(ennemy)
+        for enemy in self.enemies:
+            cells += self.get_range(enemy)
         return cells
 
-    def compute_heuristic_simple(self, humans, allies, ennemies):
+    """def compute_heuristic_simple(self, humans, allies, ennemies):
         fitness = 0
         for group in allies:
             fitness += group.get_group_at(group[0], group[1]).number
-        return fitness
-
-    """def get_grid_with_move(self, xstart, ystart, xend, yend, number):
-        if self._grid[xstart, ystart] is None or abs(xend - xstart) > 1 or abs(ystart - yend) > 1 or \
-                number > self._grid[xstart, ystart].number:
-            raise ValueError("Invalid move")
-        current_grid_copy = copy.deepcopy(self)
-        if self._grid[xend, yend] is not None and self._grid[xend, yend].species != self._grid[xstart, ystart].species:
-            factor = 2
-            species = self._grid[xstart, ystart].species
-            if species != HUM:
-                factor += 1
-            if 2*number//factor >= self._grid[xend, yend]:
-                if species == HUM:
-                    current_grid_copy._grid[xstart, ystart].number -= number
-                    if current_grid_copy._grid[xstart, ystart].number == 0:
-                        current_grid_copy._grid[xstart, ystart] = None
-                    current_grid_copy._grid[xend, yend].species = species
-                    current_grid_copy._grid[xend, yend].number += number
-                else:
-                    current_grid_copy._grid[xstart, ystart].number -= number
-                    if current_grid_copy._grid[xstart, ystart].number == 0:
-                        current_grid_copy._grid[xstart, ystart] = None
-                    current_grid_copy._grid[xend, yend].species = species
-                    current_grid_copy._grid[xend, yend].number = number
-            elif 2*self._grid[xend, yend]//factor >= number and self._grid[xend, yend].species != HUM:
-                current_grid_copy._grid[xstart, ystart].number -= number
-                if current_grid_copy._grid[xstart, ystart].number == 0:
-                    current_grid_copy._grid[xstart, ystart] = None
-            else:
-                raise Exception("Battle")
-        current_grid_copy = copy.deepcopy(self)
-        current_grid_copy._grid[xstart, ystart].number -= number
-        species = current_grid_copy._grid[xstart, ystart].species
-        if current_grid_copy._grid[xstart, ystart].number == 0:
-            current_grid_copy._grid[xstart, ystart] = None
-        if current_grid_copy._grid[xend, yend] is None:
-            current_grid_copy._grid[xend, yend] = Group(species, number)
-        else:
-            current_grid_copy._grid[xend, yend].number += number"""
+        return fitness"""
