@@ -14,7 +14,10 @@ import time
 import struct
 
 
-actor = Actor()
+#Set parameter for actions : 1 for greedy, 2 for alpha-beta
+algorithm = 1
+
+actor = Actor(algorithm)
 
 os.popen("VampiresVSWerewolvesGameServer.exe")
 
@@ -44,10 +47,10 @@ while conn.connected:
     
     # ecoute le serveur
     order = conn.receive()
+
     if order[0] == "UPD":
         #update la grille
         grid.update_all_groups(order[1])
-        print("map {}".format([grid.height,grid.width]))
     elif order[0] == "BYE":
         # to do clean break
         break
@@ -63,7 +66,7 @@ while conn.connected:
     # vider la file d'action pour prochain tour
     actor.clean_moves()
     # attendre une seconde pour visualiser sur .exe
-    time.sleep(2)
+    time.sleep(0.5)
 
 
 
