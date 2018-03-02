@@ -20,7 +20,7 @@ os.popen("VampiresVSWerewolvesGameServer.exe")
 
 name = 'paul'
 
-conn = Connector("127.0.0.1",5555)
+conn = Connector("18.194.87.146",5555)
 
 # envoit sequence NME
 conn.send("NME".encode()+struct.pack("1B",len(name))+name.encode())
