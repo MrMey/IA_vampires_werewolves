@@ -11,21 +11,20 @@ class Grid:
     def set_species(self,species):
         if species not in ['wolves','vampires']:
             raise ValueError('species must be wolves or vampires')
-        self.species = species
+        if species == 'wolves':
+            self.get_allies = self._get_wolves
+            self.get_enemies = self._get_vampires
+        if species == 'vampires':
+            self.get_allies = self._get_vampires
+            self.get_enemies = self._get_wolves
 
-    def _get_allies(self):
-        if self.species == "wolves":
-            return self.wolves
-        else:
-            return self.vampires
+    def _get_wolves(self):
+        return self.wolves
+
+    def _get_vampires(self):
+        return self.vampires
+
     allies = property(_get_allies)
-
-    def _get_enemies(self):
-        if self.species == "wolves":
-            return self.vampires
-        else:
-            return self.wolves
-
     enemies = property(_get_enemies)
 
     def _get_width(self):

@@ -47,6 +47,7 @@ def execute(name, algorithm = 1):
 
         # ecoute le serveur
         order = conn.receive()
+        start_time = time.time()
 
         if order[0] == "UPD":
             #update la grille
@@ -65,6 +66,9 @@ def execute(name, algorithm = 1):
         conn.send(actor.send_moves())
         # vider la file d'action pour prochain tour
         actor.clean_moves()
+
+        print('turn time : {} s'.format(time.time() - start_time))
+
         # attendre une seconde pour visualiser sur .exe
         time.sleep(0.5)
 
