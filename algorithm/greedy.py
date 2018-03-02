@@ -1,8 +1,10 @@
 from grid.grid import Grid
+from operator import itemgetter
 
 
 def get_distance(srce, dest):
     return abs(dest[0] - srce[0]) + abs(dest[1] - srce[1])
+
 
 def get_closest_point(grid, srce, dest, avoid_enemies=False):
     if avoid_enemies:
@@ -22,3 +24,14 @@ def get_closest_point(grid, srce, dest, avoid_enemies=False):
             return srce[0], srce[1] + 1
         else:
             return srce[0], srce[1] - 1
+
+
+def get_dest(grid, ally):
+    if len(grid.humans) > 0:
+        humans = sorted([(get_distance(ally, hu), hu) for hu in grid.humans], key=itemgetter(0))
+        target = humans[0][1]
+        dest = get_closest_point(grid, ally, target, True)
+    else:
+        target = list(grid.enemies.keys())[0]
+        dest = get_closest_point(grid, ally, target, False)
+    return dest

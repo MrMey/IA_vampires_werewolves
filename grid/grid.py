@@ -3,9 +3,30 @@ class Grid:
     def __init__(self, height, width):
         self._height = height
         self._width = width
-        self.allies = {}
+        self.vampires = {}
         self.humans = {}
-        self.enemies = {}
+        self.wolves = {}
+        self.locked_cell = []
+
+    def set_species(self,species):
+        if species not in ['wolves','vampires']:
+            raise ValueError('species must be wolves or vampires')
+        self.species = species
+
+    def _get_allies(self):
+        if self.species == "wolves":
+            return self.wolves
+        else:
+            return self.vampires
+    allies = property(_get_allies)
+
+    def _get_enemies(self):
+        if self.species == "wolves":
+            return self.vampires
+        else:
+            return self.wolves
+
+    enemies = property(_get_enemies)
 
     def _get_width(self):
         return self._width
@@ -15,15 +36,6 @@ class Grid:
 
     width = property(_get_width)
     height = property(_get_height)
-
-    def update_all_groups(self,content):
-        n = content[0]
-        if n != 0:
-            liste = content[1]
-            for i in range(0, n):
-                position = [ x for x in liste[i*5:i*5+5] ]
-                print(position)
-                self.update_group(*position)
 
     def delete_key(self, dico, key):
         try:
@@ -39,30 +51,60 @@ class Grid:
 
     def update_group(self, x, y, nb_hum, nb_vam, nb_wol):
         if nb_hum == nb_vam == nb_wol == 0:
-            self.delete_key(self.allies, (x,y))
+            self.delete_key(self.vampires, (x,y))
             self.delete_key(self.humans, (x,y))
-            self.delete_key(self.enemies, (x,y))
+            self.delete_key(self.wolves, (x,y))
 
         elif nb_hum > 0:
             self.humans[(x,y)] = nb_hum
-            self.delete_key(self.allies, (x,y))
-            self.delete_key(self.enemies, (x,y))
+            self.delete_key(self.vampires, (x,y))
+            self.delete_key(self.wolves, (x,y))
 
         elif nb_vam > 0:
-            self.allies[(x,y)] = nb_vam
+            self.vampires[(x,y)] = nb_vam
             self.delete_key(self.humans, (x,y))
-            self.delete_key(self.enemies, (x,y))
+            self.delete_key(self.wolves, (x,y))
 
         elif nb_wol > 0:
-            self.enemies[(x, y)] = nb_wol
+            self.wolves[(x, y)] = nb_wol
             self.delete_key(self.humans, (x,y))
-            self.delete_key(self.allies, (x,y))
+            self.delete_key(self.vampires, (x,y))
+
+    def update_all_groups(self,content):
+        n = content[0]
+        if n != 0:
+            liste = content[1]
+            for i in range(0, n):
+                position = [ x for x in liste[i*5:i*5+5] ]
+                print(position)
+                self.update_group(*position)
+
+    def update_map(self,content):
+        self.clean_locked_cell()
+        self.update_all_groups(content)
+
+    def initiate_all_groups(self, content, ally_start):
+        n = content[0]
+        if n != 0:
+            liste = content[1]
+            for i in range(0, n):
+                position = [x for x in liste[i * 5:i * 5 + 5]]
+                if (position[0], position[1]) == ally_start:
+                    if position[3] != 0:
+                        self.set_species('vampires')
+                    elif position[4] != 0:
+                        self.set_species('wolves')
+                    else:
+                        raise Exception("did not find our species")
+
+                print(position)
+                self.update_group(*position)
 
     def get_group_at(self, x, y):
         """Return the number of members in a cell"""
         hum = self.get_key(self.humans, (x,y))
-        al = self.get_key(self.allies, (x,y))
-        en = self.get_key(self.enemies, (x,y))
+        al = self.get_key(self.vampires, (x,y))
+        en = self.get_key(self.wolves, (x,y))
         return max(hum, al, en)
 
     def get_number_of(self, species):
@@ -71,21 +113,15 @@ class Grid:
             for hu in self.humans:
                 count += self.humans[hu]
         elif species == 'VAM':
-            for ally in self.allies:
-                count += self.allies[ally]
+            for vampire in self.vampires:
+                count += self.vampires[vampire]
         elif species == 'WOL':
-            for enemy in self.enemies:
-                count += self.enemies[enemy]
+            for wolf in self.wolves:
+                count += self.wolves[wolf]
         return count
 
     def get_distance(self, srce, dest):
         return abs(dest[0]-srce[0])+abs(dest[1]-srce[1])
-
-    def is_reachable(self,srce,dest):
-        if [abs(srce[0] - dest[0]),abs(srce[1]-dest[1])] in [[1,1],[1,0],[0,1],[1,1],[0,0]]:
-            return True
-        else:
-            return False
     
     @staticmethod
     def get_closest_points(srce, dest):
@@ -118,9 +154,21 @@ class Grid:
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if 0 <= y < self.height and 0 <= x < self.width:
+            if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
                 cells += [[x, y]]
         return cells
+
+    def is_in_map(self, pos):
+        return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
+
+    def is_locked_cell(self,pos):
+        return pos in self.locked_cell
+
+    def add_locked_cell(self,pos):
+        self.locked_cell += [pos]
+
+    def clean_locked_cell(self):
+        self.locked_cell = []
 
     def get_enemy_range(self):
         cells = []
