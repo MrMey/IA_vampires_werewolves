@@ -7,6 +7,7 @@ Created on Fri Feb  2 11:29:05 2018
 import struct
 
 from algorithm.greedy import get_closest_point, get_distance,get_dest
+from algorithm.alphabeta import get_dest_alpha_beta
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -15,22 +16,23 @@ class Actor:
         self.target = []
 
     def action(self,grid):
-        for ally in grid.allies:
-            print("humans: {}".format(grid.humans))
-            print("allies: {}".format(grid.allies))
-            print("enemies: {}".format(grid.enemies))
-            if self.algorithm == 1:
+        if self.algorithm == 1:
+            for ally in grid.allies:
+                print("humans: {}".format(grid.humans))
+                print("allies: {}".format(grid.allies))
+                print("enemies: {}".format(grid.enemies))
                 dest = get_dest(grid, ally)
+                print("dest : {}".format(dest))
+                move = [ally[0],ally[1],grid.get_group_at(ally[0],ally[1]),dest[0],dest[1]]
+                print("move : {}".format(move))
 
-            elif self.algorithm == 2:
-                #dest = ...
-                pass #to link with alpha beta algo
-            print("dest : {}".format(dest))
-            move = [ally[0],ally[1],grid.get_group_at(ally[0],ally[1]),dest[0],dest[1]]
-            print("move : {}".format(move))
-
-            self.queue.append(move)
-            grid.add_locked_cell(dest)
+                self.queue.append(move)
+                grid.add_locked_cell(dest)
+        elif self.algorithm == 2:
+            dest = get_dest_alpha_beta(grid)
+            for ally in dest:
+                move = [ally[0], ally[1], dest[ally][2], dest[ally][0], dest[ally][1]]
+                self.queue.append(move)
 
     def send_moves(self):
         paquet = bytes()
