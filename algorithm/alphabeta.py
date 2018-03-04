@@ -1,6 +1,6 @@
 import itertools
 import time
-from .strategies_to_be_incorporated import best_next_move_for_strategy
+from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
 STRATEGIES = ["convert", "attack", "flee"]
 DEPTH = 3
