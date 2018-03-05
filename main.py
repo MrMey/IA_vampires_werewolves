@@ -19,7 +19,7 @@ from algorithm.csp import csp
 
 EMULATE_SERVER = True
 
-def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
+def execute(name, algorithm=1, ip = "18.194.87.146", port = 5555):
     """
 
     :param name: name of the ai

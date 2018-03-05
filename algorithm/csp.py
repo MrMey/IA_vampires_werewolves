@@ -23,14 +23,22 @@ def csp(grid):
 
     # D : matrice indiquant la distance entre l'allié i et l'humain j
     # M : matrice indiquant 1 si l'allié i attaque l'humain j
-    for i,j in zip(range(m),range(n)):
-        D[(i,j)] = get_distance(a[i], h[j][1])
-        M[(i,j)] = model.addVar(vtype='B')
+    for i in range(m):
+        for j in range(n):
+            print(i, j)
+            D[(i,j)] = get_distance(a[i], h[j][1])
+            M[(i,j)] = model.addVar(name='%s, %s' % (i,j), vtype='B')
 
     for k in range(n):
         model.addCons(quicksum(M[(i,k)] for i in range(m)) >= h[k][0])
 
-    model.setObjective(quicksum(M[(i,j)]*D[(i,j)] for i,j in zip(range(m),range(n))), 'minimize')
+    for k in range(m):
+        model.addCons(quicksum(M[(k,j)] for j in range(n)) <= 1)
+
+    model.setObjective(quicksum(M[(i,j)]*D[(i,j)] for i in range(m) for j in range(n)), 'minimize')
     model.optimize()
     print(model.getObjVal())
-    #vars = model.getVars()
+    vars = model.getVars()
+    for v in vars:
+        if model.getVal(v) == 1:
+            print(v.name)
