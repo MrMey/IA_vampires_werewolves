@@ -14,6 +14,7 @@ logging.basicConfig(level = logging.DEBUG)
 from connector import Connector
 from grid.grid import Grid
 from decision import Actor
+from algorithm.csp import csp
 
 
 EMULATE_SERVER = True
@@ -44,8 +45,8 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
     #
     Map = conn.receive()
     grid.initiate_all_groups(Map[1],hme[1])
-
-    turn = 0
+    csp(grid)
+    """turn = 0
     # tant que la partie est active
     while conn.connected:
 
@@ -75,7 +76,7 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
 
         turn += 1
         # attend une seconde pour visualiser sur .exe
-        time.sleep(0.5)
+        time.sleep(0.5)"""
 
 
 if __name__ == "__main__":

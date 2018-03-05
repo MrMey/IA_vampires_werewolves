@@ -31,3 +31,6 @@ def csp(grid):
         model.addCons(quicksum(M[(i,k)] for i in range(m)) >= h[k][0])
 
     model.setObjective(quicksum(M[(i,j)]*D[(i,j)] for i,j in zip(range(m),range(n))), 'minimize')
+    model.optimize()
+    print(model.getObjVal())
+    #vars = model.getVars()
