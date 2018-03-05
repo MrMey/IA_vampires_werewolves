@@ -1,9 +1,15 @@
-from grid.grid import Grid
+import logging
 from operator import itemgetter
+logging.basicConfig(level = logging.DEBUG)
+
+
+from grid.grid import Grid
+
 
 
 def get_distance(srce, dest):
     return max(abs(dest[0] - srce[0]), abs(dest[1] - srce[1]))
+
 
 def get_closest_point(grid, srce, dest, avoid_enemies=False):
     if avoid_enemies:
@@ -24,9 +30,11 @@ def get_closest_point(grid, srce, dest, avoid_enemies=False):
         else:
             return srce[0], srce[1] - 1
 
+
 def choose_allies(grid, ally):
     allies = sorted([ (get_distance(ally,al), al) for al in grid.allies ], key=itemgetter(0))
     return allies[1][1] # On prend le 2ème élément car le 1er est nous-mêmes.
+
 
 def choose_humans(grid, ally):
     humans = sorted([ (get_distance(ally, hu), hu) for hu in grid.humans ], key=itemgetter(0))
@@ -37,6 +45,7 @@ def choose_humans(grid, ally):
             return hu
     return choose_allies(grid, ally)
 
+
 def choose_enemies(grid, ally):
     enemies = sorted([ (get_distance(ally, en), en) for en in grid.enemies ], key=itemgetter(0))
     nb_al = grid.allies[ally]
@@ -45,6 +54,7 @@ def choose_enemies(grid, ally):
         if grid.enemies[en] < 1.5*nb_al:
             return en
     return choose_allies(grid, ally)
+
 
 def get_dest(grid, ally):
     # Si il y a des humains

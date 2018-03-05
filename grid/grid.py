@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level = logging.DEBUG)
 
 class Grid:
     def __init__(self, height, width):
@@ -76,7 +78,7 @@ class Grid:
             liste = content[1]
             for i in range(0, n):
                 position = [ x for x in liste[i*5:i*5+5] ]
-                print(position)
+                logging.debug(position)
                 self.update_group(*position)
 
     def update_map(self,content):
@@ -97,7 +99,7 @@ class Grid:
                     else:
                         raise Exception("did not find our species")
 
-                print(position)
+                logging.debug(position)
                 self.update_group(*position)
 
     def get_group_at(self, x, y):
