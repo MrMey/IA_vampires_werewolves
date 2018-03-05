@@ -13,20 +13,21 @@ class Grid:
     def set_species(self,species):
         if species not in ['wolves','vampires']:
             raise ValueError('species must be wolves or vampires')
-        if species == 'wolves':
-            self.get_allies = self._get_wolves
-            self.get_enemies = self._get_vampires
-        if species == 'vampires':
-            self.get_allies = self._get_vampires
-            self.get_enemies = self._get_wolves
+        self.species = species
 
-    def _get_wolves(self):
-        return self.wolves
-
-    def _get_vampires(self):
-        return self.vampires
-
+    def _get_allies(self):
+        if self.species == "wolves":
+            return self.wolves
+        else:
+            return self.vampires
     allies = property(_get_allies)
+
+    def _get_enemies(self):
+        if self.species == "wolves":
+            return self.vampires
+        else:
+            return self.wolves
+
     enemies = property(_get_enemies)
 
     def _get_width(self):
@@ -116,9 +117,6 @@ class Grid:
         elif species == 'WOL':
             return sum(self.wolves.values())
 
-    def get_distance(self, srce, dest):
-        return abs(dest[0]-srce[0]) + abs(dest[1]-srce[1])
-
     @staticmethod
     def get_closest_points(srce, dest):
         moves = []
@@ -141,7 +139,6 @@ class Grid:
                 moves = [(0,1), (-1,1), (1,1)] + moves
             elif srce[1] > dest[1]:
                 moves = [(0,-1), (-1,-1), (1,-1)] + moves
-
         return moves
 
     def get_range(self, pos):
@@ -150,9 +147,12 @@ class Grid:
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
+            if self.is_in_map((x,y)):
                 cells += [(x, y)]
         return cells
+
+    def get_ally_possible_moves(self,pos):
+        return [move for move in self.get_range(pos) if move not in self.locked_cell]
 
     def is_in_map(self, pos):
         return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
