@@ -48,8 +48,6 @@ def execute(name, algorithm = 1):
         # ecoute le serveur
         order = conn.receive()
 
-
-
         if order[0] == "UPD":
             #update la grille
             grid.update_map(order[1])
@@ -60,11 +58,8 @@ def execute(name, algorithm = 1):
             # to do clean break
             break
 
-        top = time.time()
         # take decision
         actor.action(grid)
-
-        print("decision time: {}".format(time.time() - top))
 
         # envoyer file d'actions au serveur
         conn.send(actor.send_moves())
@@ -78,4 +73,4 @@ if __name__ == "__main__":
     time.sleep(5)
     if EMULATE_SERVER:
         os.popen("VampiresVSWerewolvesGameServer.exe")
-    execute('alphabeta', 2)
+    execute('greedy', 1)
