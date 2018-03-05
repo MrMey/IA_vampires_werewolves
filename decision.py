@@ -6,7 +6,7 @@ Created on Fri Feb  2 11:29:05 2018
 """
 import struct
 
-from algorithm.greedy import get_closest_point, get_distance,get_dest
+from algorithm.greedy import get_dest
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -26,7 +26,7 @@ class Actor:
                 #dest = ...
                 pass #to link with alpha beta algo
             print("dest : {}".format(dest))
-            move = [ally[0],ally[1],grid.get_group_at(ally[0],ally[1]),dest[0],dest[1]]
+            move = (ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])
             print("move : {}".format(move))
 
             self.queue.append(move)
