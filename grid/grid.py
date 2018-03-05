@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level = logging.DEBUG)
 
 class Grid:
     def __init__(self, height, width):
@@ -75,7 +77,7 @@ class Grid:
             liste = content[1]
             for i in range(0, n):
                 position = [ x for x in liste[i*5:i*5+5] ]
-                print(position)
+                logging.debug(position)
                 self.update_group(*position)
 
     def update_map(self,content):
@@ -96,65 +98,60 @@ class Grid:
                     else:
                         raise Exception("did not find our species")
 
-                print(position)
+                logging.debug(position)
                 self.update_group(*position)
 
     def get_group_at(self, x, y):
         """Return the number of members in a cell"""
         hum = self.get_key(self.humans, (x,y))
-        al = self.get_key(self.vampires, (x,y))
-        en = self.get_key(self.wolves, (x,y))
-        return max(hum, al, en)
+        vam = self.get_key(self.vampires, (x,y))
+        wol = self.get_key(self.wolves, (x,y))
+        return max(hum, vam, wol)
 
     def get_number_of(self, species):
-        count = 0
         if species == 'HUM':
-            for hu in self.humans:
-                count += self.humans[hu]
+            return sum(self.humans.values())
         elif species == 'VAM':
-            for vampire in self.vampires:
-                count += self.vampires[vampire]
+            return sum(self.vampires.values())
         elif species == 'WOL':
-            for wolf in self.wolves:
-                count += self.wolves[wolf]
-        return count
+            return sum(self.wolves.values())
 
     def get_distance(self, srce, dest):
-        return abs(dest[0]-srce[0])+abs(dest[1]-srce[1])
-    
+        return abs(dest[0]-srce[0]) + abs(dest[1]-srce[1])
+
     @staticmethod
     def get_closest_points(srce, dest):
         moves = []
         if srce[0] < dest[0]:
             if srce[1] < dest[1]:
-                moves = [[1, 1], [0, 1], [1, 0]] + moves
+                moves = [(1,1), (0,1), (1,0)] + moves
             elif srce[1] > dest[1]:
-                moves = [[1, -1], [0, -1], [1, 0]] + moves
+                moves = [(1,-1), (0,-1), (1,0)] + moves
             else:
-                moves = [[1, 0], [1, -1], [1, 1]] + moves
+                moves = [(1,0), (1,-1), (1,1)] + moves
         elif srce[0] > dest[0]:
             if srce[1] < dest[1]:
-                moves = [[- 1, 1], [0, 1], [- 1, 0]] + moves
+                moves = [(-1,1), (0,1), (-1,0)] + moves
             elif srce[1] > dest[1]:
-                moves = [[- 1, - 1], [0, - 1], [- 1, 0]] + moves
+                moves = [(-1,-1), (0,-1), (-1,0)] + moves
             else:
-                moves = [[- 1, 0], [-1, -1], [-1, 1]] + moves
+                moves = [(-1,0), (-1,-1), (-1,1)] + moves
         else:
             if srce[1] < dest[1]:
-                moves = [[0, 1], [-1, 1], [1, 1]] + moves
+                moves = [(0,1), (-1,1), (1,1)] + moves
             elif srce[1] > dest[1]:
-                moves = [[0, - 1], [- 1, - 1], [1, -1]] + moves
+                moves = [(0,-1), (-1,-1), (1,-1)] + moves
 
         return moves
 
     def get_range(self, pos):
-        offsets = [[1, 1], [1, 0], [1, -1], [0, -1],[-1, -1], [-1, 0], [-1, 1], [0, 1],[0,0]]
+        offsets = ((1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1), (0,1), (0,0))
         cells = []
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
             if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
-                cells += [[x, y]]
+                cells += [(x, y)]
         return cells
 
     def is_in_map(self, pos):
@@ -175,8 +172,3 @@ class Grid:
             cells += self.get_range(enemy)
         return cells
 
-    """def compute_heuristic_simple(self, humans, allies, ennemies):
-        fitness = 0
-        for group in allies:
-            fitness += group.get_group_at(group[0], group[1]).number
-        return fitness"""

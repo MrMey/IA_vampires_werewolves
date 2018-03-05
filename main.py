@@ -4,19 +4,21 @@ Created on Fri Feb  2 11:29:05 2018
 
 @author: Mr_Mey
 """
+import os
+import time
+import struct
+import sys
+import logging
+logging.basicConfig(level = logging.DEBUG)
 
 from connector import Connector
 from grid.grid import Grid
 from decision import Actor
 
-import os
-import time
-import struct
-
 
 EMULATE_SERVER = True
 
-def execute(name, algorithm = 1):
+def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
     """
 
     :param name: name of the ai
@@ -24,9 +26,9 @@ def execute(name, algorithm = 1):
     :return:
     """
     actor = Actor(algorithm)
-    conn = Connector("127.0.0.1",5555)
+    conn = Connector(ip, port)
 
-    # envoit sequence NME
+    # envoie sequence NME
     conn.send("NME".encode()+struct.pack("1B",len(name))+name.encode())
 
     # recoit commande SET
@@ -42,10 +44,13 @@ def execute(name, algorithm = 1):
     #
     Map = conn.receive()
     grid.initiate_all_groups(Map[1],hme[1])
+
+    turn = 0
     # tant que la partie est active
     while conn.connected:
 
-        # ecoute le serveur
+        # écoute le serveur
+        logging.info('starting turn {}'.format(turn))
         order = conn.receive()
         start_time = time.time()
 
@@ -53,27 +58,37 @@ def execute(name, algorithm = 1):
             #update la grille
             grid.update_map(order[1])
         elif order[0] == "BYE":
-            # to do clean break
+            # TODO clean break
+            logging.error("server unexpectedly close connexion")
             break
         elif order[0] == "END":
-            # to do clean break
+            logging.info("finishing game")
+            # TODO clean break
             break
 
-        # take decision
+        # prend la decision
         actor.action(grid)
 
-        # envoyer file d'actions au serveur
+        # envoie file d'actions au serveur
         conn.send(actor.send_moves())
-        # vider la file d'action pour prochain tour
+        # vide la file d'action pour prochain tour
         actor.clean_moves()
 
-        print('turn time : {} s'.format(time.time() - start_time))
 
-        # attendre une seconde pour visualiser sur .exe
+        turn += 1
+        # attend une seconde pour visualiser sur .exe
+
         time.sleep(0.5)
 
 
 if __name__ == "__main__":
-    if EMULATE_SERVER:
+    args = sys.argv
+
+    if args[0] != 'main.py':
+        # if the program is not launched by command line then open the exe
         os.popen("VampiresVSWerewolvesGameServer.exe")
-    execute('paul')
+        execute('paul')
+    elif len(args) < 3:
+        raise(Exception('missing argument'))
+    else:
+        execute(name = 'paul', ip = args[1], port = int(args[2]))

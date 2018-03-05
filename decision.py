@@ -5,8 +5,10 @@ Created on Fri Feb  2 11:29:05 2018
 @author: Mr_Mey
 """
 import struct
+import logging
+logging.basicConfig(level = logging.DEBUG)
 
-from algorithm.greedy import get_closest_point, get_distance,get_dest
+from algorithm.greedy import get_dest
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -16,18 +18,20 @@ class Actor:
 
     def action(self,grid):
         for ally in grid.allies:
-            print("humans: {}".format(grid.humans))
-            print("allies: {}".format(grid.allies))
-            print("enemies: {}".format(grid.enemies))
+            logging.debug("humans: {}".format(grid.humans))
+            logging.debug("allies: {}".format(grid.allies))
+            logging.debug("enemies: {}".format(grid.enemies))
             if self.algorithm == 1:
                 dest = get_dest(grid, ally)
 
             elif self.algorithm == 2:
                 #dest = ...
                 pass #to link with alpha beta algo
-            print("dest : {}".format(dest))
-            move = [ally[0], ally[1], grid.get_group_at(ally[0], ally[1]), dest[0], dest[1]]
-            print("move : {}".format(move))
+
+            logging.debug("dest : {}".format(dest))
+            move = (ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])
+            logging.debug("move : {}".format(move))
+
 
             self.queue.append(move)
             grid.add_locked_cell(dest)
