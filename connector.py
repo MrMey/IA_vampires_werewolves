@@ -10,15 +10,15 @@ import time
 import os
 import struct
 
+
 class Connector:
-    def __init__(self,ip,port,name = 'paul'):
+    def __init__(self, ip, port, name='paul'):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((ip, port))
         self.sock.settimeout(10)
         self.name = name
         self.connected = True
         print(self.sock)
-
         
     def stop(self):
         if self.sock:
@@ -36,7 +36,7 @@ class Connector:
             order += self.sock.recv(1)
         order = order.decode()
         
-        if order in ["MAP","UPD"]:
+        if order in ("MAP","UPD"):
             return self.receive_UPD()
         if order == "SET":
             return self.receive_SET()
@@ -92,8 +92,7 @@ class Connector:
         self.connected = False
         return ("BYE")
 
-  
-    
+
 if __name__ == "__main__":    
     os.popen("VampiresVSWerewolvesGameServer.exe")
     time.sleep(1)
@@ -104,5 +103,4 @@ if __name__ == "__main__":
     connect.receive()
     connect.receive()
     connect.receive()
-    connect.stop() 
-
+    connect.stop()
