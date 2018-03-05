@@ -175,9 +175,3 @@ class Grid:
         for enemy in self.enemies:
             cells += self.get_range(enemy)
         return cells
-
-    """def compute_heuristic_simple(self, humans, allies, ennemies):
-        fitness = 0
-        for group in allies:
-            fitness += group.get_group_at(group[0], group[1]).number
-        return fitness"""
