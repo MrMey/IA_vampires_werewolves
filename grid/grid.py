@@ -117,9 +117,6 @@ class Grid:
         elif species == 'WOL':
             return sum(self.wolves.values())
 
-    def get_distance(self, srce, dest):
-        return abs(dest[0]-srce[0]) + abs(dest[1]-srce[1])
-
     @staticmethod
     def get_closest_points(srce, dest):
         moves = []
@@ -142,7 +139,6 @@ class Grid:
                 moves = [(0,1), (-1,1), (1,1)] + moves
             elif srce[1] > dest[1]:
                 moves = [(0,-1), (-1,-1), (1,-1)] + moves
-
         return moves
 
     def get_range(self, pos):
@@ -151,9 +147,12 @@ class Grid:
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
+            if self.is_in_map((x,y)):
                 cells += [(x, y)]
         return cells
+
+    def get_ally_possible_moves(self,pos):
+        return [move for move in self.get_range(pos) if move not in self.locked_cell]
 
     def is_in_map(self, pos):
         return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
