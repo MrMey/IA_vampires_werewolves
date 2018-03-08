@@ -27,9 +27,11 @@ class Actor:
             elif self.algorithm == 2:
                 #dest = ...
                 pass #to link with alpha beta algo
+
             logging.debug("dest : {}".format(dest))
             move = (ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])
             logging.debug("move : {}".format(move))
+
 
             self.queue.append(move)
             grid.add_locked_cell(dest)

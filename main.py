@@ -74,8 +74,10 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
         # vide la file d'action pour prochain tour
         actor.clean_moves()
 
+
         turn += 1
         # attend une seconde pour visualiser sur .exe
+
 
         logging.info('finishing turn {} \n elapsed time : {}s'.format(turn, time.time()-start_time))
         time.sleep(0.5)
