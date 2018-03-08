@@ -131,23 +131,23 @@ class Grid:
         moves = []
         if srce[0] < dest[0]:
             if srce[1] < dest[1]:
-                moves = [(1,1), (0,1), (1,0)] + moves
+                moves = [(1,1), (0,1), (1,0), (-1,1), (1,-1)] + moves
             elif srce[1] > dest[1]:
-                moves = [(1,-1), (0,-1), (1,0)] + moves
+                moves = [(1,-1), (0,-1), (1,0),(-1,-1),(1,1)] + moves
             else:
-                moves = [(1,0), (1,-1), (1,1)] + moves
+                moves = [(1,0), (1,-1), (1,1), (0,-1), (0,1)] + moves
         elif srce[0] > dest[0]:
             if srce[1] < dest[1]:
-                moves = [(-1,1), (0,1), (-1,0)] + moves
+                moves = [(-1,1), (0,1), (-1,0), (-1,-1), (1,1)] + moves
             elif srce[1] > dest[1]:
-                moves = [(-1,-1), (0,-1), (-1,0)] + moves
+                moves = [(-1,-1), (0,-1), (-1,0), (1,-1), (-1,1)] + moves
             else:
-                moves = [(-1,0), (-1,-1), (-1,1)] + moves
+                moves = [(-1,0), (-1,-1), (-1,1), (0,1), (0,-1)] + moves
         else:
             if srce[1] < dest[1]:
-                moves = [(0,1), (-1,1), (1,1)] + moves
+                moves = [(0,1), (-1,1), (1,1), (1,0), (-1,0)] + moves
             elif srce[1] > dest[1]:
-                moves = [(0,-1), (-1,-1), (1,-1)] + moves
+                moves = [(0,-1), (-1,-1), (1,-1), (1,0), (-1,0)] + moves
         return moves
 
     def get_range(self, pos):

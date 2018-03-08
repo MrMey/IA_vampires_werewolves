@@ -28,9 +28,9 @@ class Actor:
                 #dest = ...
                 pass #to link with alpha beta algo
 
-            logging.debug("dest : {}".format(dest))
+
             move = (ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])
-            logging.debug("move : {}".format(move))
+            logging.debug("move {} units from {} to {}".format(grid.get_group_at(ally[0],ally[1]),ally,dest))
 
 
             self.queue.append(move)

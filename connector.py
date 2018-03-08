@@ -10,7 +10,7 @@ import time
 import os
 import struct
 import logging
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level = logging.INFO)
 
 class Connector:
     def __init__(self, ip, port, name='paul', timeout = None):
