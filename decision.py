@@ -37,10 +37,11 @@ class Actor:
     def send_moves(self):
         paquet = bytes()
         paquet += 'MOV'.encode()
-        paquet += struct.pack('b', len(self.queue))
+        paquet += struct.pack('B', len(self.queue))
         for move in self.queue:
             for el in move:
-                paquet += struct.pack('b', el)
+                # need to use usigned byte to go up to 255 units
+                paquet += struct.pack('B', el)
         return paquet
 
     def clean_moves(self):
