@@ -86,12 +86,21 @@ class Grid:
         self.update_all_groups(content)
 
     def initiate_all_groups(self, content, ally_start):
+        """
+        group initiations called only at the begining.
+        Similar to update_all_group + species identification
+        args content :
+        args ally_start : tuple containing start position of our species 
+        return : 
+        """
         n = content[0]
         if n != 0:
             liste = content[1]
             for i in range(0, n):
+                # a group is identified by a 5-element tuple (x,y,human_nb,nb_wolves,nb_vampires)
                 position = [x for x in liste[i * 5:i * 5 + 5]]
                 if (position[0], position[1]) == ally_start:
+                    logging.debug("position tuple {} and ally start {}".format(position,ally_start))
                     if position[3] != 0:
                         self.set_species('vampires')
                     elif position[4] != 0:
@@ -171,4 +180,3 @@ class Grid:
         for enemy in self.enemies:
             cells += self.get_range(enemy)
         return cells
-

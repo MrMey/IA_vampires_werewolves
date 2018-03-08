@@ -11,24 +11,26 @@ def get_distance(srce, dest):
     return max(abs(dest[0] - srce[0]), abs(dest[1] - srce[1]))
 
 
-def get_closest_point(grid, srce, dest, avoid_enemies=False):
-    if avoid_enemies:
-        offsets = Grid.get_closest_points(srce, dest)
-        idx = 0
-        while (((srce[0] + offsets[idx][0], srce[1] + offsets[idx][1]) not in grid.get_range(srce)
-               or (srce[0] + offsets[idx][0], srce[1] + offsets[idx][1]) in grid.get_enemy_range())
-                and  idx < len(offsets)-1):
-            idx += 1
-        return srce[0] + offsets[idx][0], srce[1] + offsets[idx][1]
-    else:
-        if srce[0] < dest[0]:
-            return srce[0] + 1, srce[1]
-        elif srce[0] > dest[0]:
-            return srce[0] - 1, srce[1]
-        elif srce[1] < dest[1]:
-            return srce[0], srce[1] + 1
-        else:
-            return srce[0], srce[1] - 1
+def get_closest_point(grid, srce, dest):
+    moves = Grid.get_closest_points(srce, dest)
+    idx = 0
+    iter_pos = True
+    while iter_pos and idx < len(moves)-1:
+        # if all conditions are met then choose position else iterates
+        iter_pos = False
+        next_pos = (srce[0] + moves[idx][0], srce[1] + moves[idx][1])
+        logging.debug('next_post {} vs ally {}'.format(next_pos, grid.allies[srce]))
+        if next_pos not in grid.get_range(srce):
+            iter_pos = True
+        elif next_pos in grid.get_enemy_range():
+            iter_pos = True
+        elif next_pos in grid.humans:
+
+            if grid.humans[next_pos] >= grid.allies[srce]:
+                iter_pos = True
+        idx += 1
+    return srce[0] + moves[idx-1][0], srce[1] + moves[idx-1][1]
+
 
 
 def choose_allies(grid, ally):
@@ -44,7 +46,6 @@ def choose_humans(grid, ally):
         if grid.humans[hu] < nb_al:
             return hu
     return choose_allies(grid, ally)
-
 
 def choose_enemies(grid, ally):
     enemies = sorted([ (get_distance(ally, en), en) for en in grid.enemies ], key=itemgetter(0))
@@ -68,8 +69,8 @@ def get_dest(grid, ally):
 
     if len(grid.humans) > 0:
         target = choose_humans(grid, ally)
-        dest = get_closest_point(grid, ally, target, True)
+        dest = get_closest_point(grid, ally, target)
     else:
         target = choose_enemies(grid, ally)
-        dest = get_closest_point(grid, ally, target, False)
+        dest = get_closest_point(grid, ally, target)
     return dest
