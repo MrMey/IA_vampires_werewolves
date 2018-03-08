@@ -30,6 +30,7 @@ class Actor:
                 grid.add_locked_cell(dest)
         elif self.algorithm == 2:
             dest = get_dest_alpha_beta(grid)
+            print("DEST: {}".format(dest))
             for ally in dest:
                 move = [ally[0], ally[1], dest[ally][2], dest[ally][0], dest[ally][1]]
                 self.queue.append(move)
