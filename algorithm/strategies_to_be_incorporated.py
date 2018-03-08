@@ -1,6 +1,6 @@
 """humans = {(1, 1): 6, (2, 5): 2, (5, 2): 1}
 allies = {(2, 3): 3, (5, 5): 3, (2, 1): 1}
-enemies = {(2, 4): 12, (2, 4): 1}
+enemies = {(2, 4): 12, (3, 2): 1}
 group = (2, 3)"""
 
 # quelques remarques générales:
@@ -17,80 +17,50 @@ group = (2, 3)"""
 
 # 5. Attention il peut y avoir des doublons en fonction des stratégies
 
+# 6. les contours de la carte (x_max et y_max sont encore sur la carte)
+# et les cases interdites (cases qui contenait un groupe juste avant)
 
-def best_next_move_for_strategy(strategy, group, humans, allies, enemies):
+
+def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked_cells, x_max, y_max):
     # getting the imediate context of the group
-    just_around = {"humans": [], "enemies": [], "allies": []}
+    # just_around, i, j = get_imediate_context(group, humans, enemies, allies)
     i = group[0]
     j = group[1]
-    for h in humans:
-        if (h[0] == i-1 or h[0] == i or h[0] == i+1) and (h[1] == j-1 or h[1] == j or h[1] == j+1):
-            just_around["humans"].append(h)
-    for e in enemies:
-        if (e[0] == i-1 or e[0] == i or e[0] == i+1) and (e[1] == j-1 or e[1] == j or e[1] == j+1):
-            just_around["enemies"].append(e)
-    for a in allies:
-        if (a[0] == i - 1 or a[0] == i or a[0] == i + 1) and (a[1] == j - 1 or a[1] == j or a[1] == j + 1):
-            just_around["allies"].append(a)
-
     # best move depending of the strategy
     moves = []
     if strategy == "convert":
-        # si il y a des humains juste à côté, on les convertit en priorité, si ça ne nous occasionne pas de perte
-        if len(just_around["humans"]) > 0:
-            best = (None, 0)
-            for h in range(len(just_around["humans"])):
-                if best[1] < humans[just_around["humans"][h]] < allies[group]:
-                    best = (humans[just_around["humans"][h]], humans[just_around["humans"][h]])
-            if not best[0]is None:
-                return best[0]  # la maison juste à côté avec le meilleur potentiel
-        # si il n'y a pas d'humains autour, ou en trop grand nombre, on cherche une maison plus loin
-        target = find_closest(group, humans, 1, 3, allies)
+        # TODO enlever cette partie ?
+        # # si il y a des humains juste à côté, on les convertit en priorité, si ça ne nous occasionne pas de perte
+        # best = get_convertible_humans_in_imediate_context(just_around, humans, allies, group)
+        # if len(best) > 0:
+        #     # on ne prend pas en compte les locked cells ici : si c'est une case d'humains, il n'y a pas d'allies ici,
+        #     #  l'alpha-beta regarde si il y des enemis trop forts autours
+        #     print("in imediate context, let's convert some humans!!!!!")
+        #     return best
+
+        # si il n'y a pas d'humains convertissables autour, on cherche une maison plus loin
+        target = find_closest(group, humans, 1, 3, allies) # TODO rattraper erreur
+        locked = locked_extend("convert", locked_cells, humans, enemies, allies[group])
+        # on suppose qu'un groupe allié sur le chemin ne pose pas de problème:
+        #     soit il fusionne soit il est dans locked_cells
+        # si l'enemi est faible, on le "mange" au passage
+        # si l'enemi est moyen
+        #               -> on l'évite
+        # si l'enemi est fort
+        #               -> on abandonne d'aller convertir la maison dans cette direction
+        #                  car un déplacement vers elle nous ferait tuer le groupe
         for t in target:
             # trouve la direction à prendre...
-            i_new = group[0]
-            j_new = group[1]
-            if t[0] > i:
-                i_new = i+1
-            elif t[0] < i:
-                i_new = i-1
-            if t[1] > j:
-                j_new = j+1
-            elif t[1] < i:
-                j_new = j-1
-            # vérifie qu'il n'y a pas d'obstacles
-            # on suppose qu'un groupe allié sur le chemin ne pose pas de problème, car soit il bouge, soit il fusionne
-            if (i_new, j_new) in just_around["enemies"]:
-                # si l'enemi est faible, on le "mange" au passage
-                # pas la peine de répéter
-                # si l'enemi est moyen -> on l'évite
-                # si l'enemi est fort -> on abandonne d'aller convertir la maison dans cette direction
-                # car un déplacement vers elle nous ferait tuer le groupe
-                if enemies[(i_new, j_new)] * 1.5 < allies[group]:
-                    moves.append((i_new, j_new, allies[group]))
-                elif enemies[(i_new, j_new)] < 1.5 * allies[group] < 1.5 * 1.5 * enemies[(i_new, j_new)]:
-                    (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                    if not((i1, j1) in just_around["humans"]):
-                        if (i1, j1) in just_around["enemies"]:
-                            if enemies[(i1, j1)] * 1.5 < allies[group]:
-                                moves.append((i1, j1, allies[group]))
-                        else:
-                            moves.append((i1, j1, allies[group]))
-                    if not((i2, j2) in just_around["humans"]):
-                        if (i2, j2) in just_around["enemies"]:
-                            if enemies[(i2, j2)] * 1.5 < allies[group]:
-                                moves.append((i2, j2, allies[group]))
-                        else:
-                            moves.append((i1, j1, allies[group]))
-            elif (i_new, j_new) in just_around["humans"]:
-                # le groupe d'humain est forcément trop grand pour être converti,
-                # sinon le résultat aurait déjà été renvoyé
+            i_new, j_new = find_direction_for_target(group, t)
+            #print('     target : ' + str(t) + '  direction : ' + str((i_new, j_new)))
+            # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
+            if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if not (i1, j1) in just_around["humans"]:
+                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves:
                     moves.append((i1, j1, allies[group]))
-                if not (i2, j2) in just_around["humans"]:
+                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves:
                     moves.append((i2, j2, allies[group]))
-            else:
+            elif (i_new, j_new) not in moves:
                 moves.append((i_new, j_new, allies[group]))
     elif strategy == "attack":
         target = find_closest(group, enemies, 1.5, 3, allies)
@@ -102,12 +72,57 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies):
     return moves
 
 
+def find_direction_for_target(group, t):
+    i_new = group[0]
+    j_new = group[1]
+    if t[0] > group[0]:
+        i_new = group[0] + 1
+    elif t[0] < group[0]:
+        i_new = group[0] - 1
+    if t[1] > group[1]:
+        j_new = group[1] + 1
+    elif t[1] < group[1]:
+        j_new = group[1] - 1
+    return i_new, j_new
+
+
+def get_convertible_humans_in_imediate_context(just_around, humans, allies, group):
+    """
+    humains convertissable dans les cases juste autour
+    """
+    best = []
+    for h in range(len(just_around["humans"])):
+        if humans[just_around["humans"][h]] < allies[group]:
+            best.append((just_around["humans"][h], humans[just_around["humans"][h]]))
+    return best
+
+
+def get_imediate_context(group, humans, enemies, allies):
+    """
+    Donne la position du groupe et pour les cases autour, divisé entre les humains, les alliés et les enemis
+    """
+    just_around = {"humans": [], "enemies": [], "allies": []}
+    i = group[0]
+    j = group[1]
+    for h in humans:
+        if (h[0] == i - 1 or h[0] == i or h[0] == i + 1) and (h[1] == j - 1 or h[1] == j or h[1] == j + 1):
+            just_around["humans"].append(h)
+    for e in enemies:
+        if (e[0] == i - 1 or e[0] == i or e[0] == i + 1) and (e[1] == j - 1 or e[1] == j or e[1] == j + 1):
+            just_around["enemies"].append(e)
+    for a in allies:
+        if (a[0] == i - 1 or a[0] == i or a[0] == i + 1) and (a[1] == j - 1 or a[1] == j or a[1] == j + 1):
+            if a != group:
+                just_around["allies"].append(a)
+    return just_around, i, j
+
+
 def find_closest(group, category, rate, max_return, allies):
     """
     renvoie la liste des max_return plus proches cases correspondant à des groupes de catégory, en
-    evitant les confrontations qui ne mènent pas à la victoire de façon certaine"""
-    if category.isempty():
-        raise Exception("nothing to go after")
+    évitant les confrontations qui ne mènent pas à la victoire de façon certaine"""
+    if len(category) == 0:
+        return []
     best_choice = []
     for loc, nb in category.items():
         distance = max(loc[0] - group[0], loc[1] - group[1])
@@ -124,8 +139,49 @@ def find_closest(group, category, rate, max_return, allies):
 
 
 def try_avoiding(i, j, i_new, j_new):
+    """
+    le pion est sur la case (i,j) et doit se déplacer sur la case (i_new,j_new), mais cette case n'est pas accessible.
+    On renvoie alors les deux cases qui permettent d'éviter l'ostacle tout en allant à peu près dans la bonne direction
+    """
     if i == i_new:
-        return i+1, j, i-1, j
+        return i+1, j_new, i-1, j_new
     elif j == j_new:
-        return i, j+1, i, j-1
+        return i_new, j+1, i_new, j-1
     return i, j_new, i_new, j
+
+
+def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
+    """
+    Renvoie les cases à éviter absolument
+    :param strategy:
+    :param locked_cells: cases de départ de groupes allies
+    :param humans:
+    :param enemies:
+    :param group_nbr: nombre d'éléments dans le groupe considéré
+    :return: l'ensemble des cases à éviter : les cases de départ des autres alliés,
+                les cases d'humains trop nombreux convertis, les cases des enemis trop forts pour être attaqués et
+                les cases autour s'il est même assez puissant pour nous attaquer
+    """
+    locked_list = locked_cells
+    if strategy == "convert":
+        for human, nbr in humans.items():
+            if nbr >= group_nbr:
+                locked_list.append(human)
+        for enemie, nbr in enemies.items():
+            if nbr >= group_nbr * 1.5 :
+                locked_list += [enemie,
+                                (enemie[0]-1, enemie[1]-1),
+                                (enemie[0], enemie[1]-1),
+                                (enemie[0]-1, enemie[1]),
+                                (enemie[0]+1, enemie[1]-1),
+                                (enemie[0]+1, enemie[1]),
+                                (enemie[0]+1, enemie[1]+1),
+                                (enemie[0]-1, enemie[1]+1),
+                                (enemie[0], enemie[1]+1)]
+            elif nbr * 1.5 >= group_nbr :
+                locked_list += [enemie]
+    return locked_list
+
+def hors_carte(i, j, x, y):
+    """ renvoie si (i,j) est bien dans la carte"""
+    return i < 0 or j < 0 or i > x or j > y
