@@ -10,6 +10,9 @@ __pycache__/
 #idea files
 .idea/
 
+#official server
+official_server/*
+
 # txt files
 *.txt
 

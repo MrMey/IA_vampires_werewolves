@@ -74,10 +74,10 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
         # vide la file d'action pour prochain tour
         actor.clean_moves()
 
+
         turn += 1
         # attend une seconde pour visualiser sur .exe
 
-        logging.info('finishing turn {} \n elapsed time : {}s'.format(turn, time.time()-start_time))
         time.sleep(0.5)
 
 
@@ -90,5 +90,7 @@ if __name__ == "__main__":
         execute('paul')
     elif len(args) < 3:
         raise(Exception('missing argument'))
-    else:
+    elif len(args) == 3:
         execute(name = 'paul', ip = args[1], port = int(args[2]))
+    elif len(args) == 5:
+        execute(name = args[1], algorithm= int(args[2]), ip = args[3], port = int(args[4]))
