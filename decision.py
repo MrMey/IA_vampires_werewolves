@@ -30,6 +30,7 @@ class Actor:
                 elif self.algorithm == 3:
                     move = splittercell.get_dest(grid, ally)
                 logging.debug("move {}".format(move))
+                # move must be a list
                 self.queue += move
         elif self.algorithm == 2:
             dest = alphabeta.get_dest_alpha_beta(grid)
