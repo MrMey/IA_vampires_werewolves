@@ -86,10 +86,6 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
 
 if __name__ == "__main__":
     args = sys.argv
-<<<<<<< HEAD
-=======
-
->>>>>>> b6cfa512a19cd78daa763a531c0879190cca4863
     if args[0] != 'main.py':
         # if the program is not launched by command line then open the exe
         os.popen("VampiresVSWerewolvesGameServer.exe")
