@@ -9,16 +9,17 @@ import socket
 import time
 import os
 import struct
+import logging
+logging.basicConfig(level = logging.INFO)
 
 class Connector:
-    def __init__(self,ip,port,name = 'paul'):
+    def __init__(self, ip, port, name='paul', timeout = None):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((ip, port))
-        self.sock.settimeout(10)
+        if timeout:
+            self.sock.settimeout(timeout)
         self.name = name
         self.connected = True
-        print(self.sock)
-
         
     def stop(self):
         if self.sock:
@@ -26,17 +27,17 @@ class Connector:
         self.connected = False
         
     def send(self,trame):
-        print("sending")
+        logging.debug("sending")
         self.sock.send(trame)
     
     def receive(self):
-        print("receiving")
+        logging.debug("receiving")
         order = bytes()
         while len(order) < 3:
             order += self.sock.recv(1)
         order = order.decode()
         
-        if order in ["MAP","UPD"]:
+        if order in ("MAP","UPD"):
             return self.receive_UPD()
         if order == "SET":
             return self.receive_SET()
@@ -53,35 +54,35 @@ class Connector:
     def receive_SET(self):
         n = int(struct.unpack("1B",self.sock.recv(1))[0])
         m = int(struct.unpack("1B",self.sock.recv(1))[0])
-        print(("SET",(n,m)))
+        logging.debug(("SET",(n,m)))
         return ("SET",(n,m))
     
     def receive_HUM(self):
         n = struct.unpack("1B",self.sock.recv(1))[0]
         coord = []
-        for i in range(n):
+        for _ in range(n):
             coord += [struct.unpack("1B",self.sock.recv(1))[0]]
             coord += [struct.unpack("1B",self.sock.recv(1))[0]]
-        print(("HUM",(n,coord)))
+        logging.debug(("HUM",(n,coord)))
         return ("HUM",(n,coord))
 
     def receive_HME(self):
         x = struct.unpack("1B",self.sock.recv(1))[0]
         y = struct.unpack("1B",self.sock.recv(1))[0]
-        print(("HME",(x,y)))
+        logging.debug(("HME",(x,y)))
         return ("HME",(x,y))
     
     def receive_UPD(self):
         n = struct.unpack("1B",self.sock.recv(1))[0]
         changes = []
-        for i in range(n):
+        for _ in range(n):
             x = struct.unpack("1B",self.sock.recv(1))[0]
             y = struct.unpack("1B",self.sock.recv(1))[0]
             h = struct.unpack("1B",self.sock.recv(1))[0]
             v = struct.unpack("1B",self.sock.recv(1))[0]
             l = struct.unpack("1B",self.sock.recv(1))[0]
             changes += [x,y,h,v,l]
-        print(("UPD",(n,changes)))
+        logging.debug(("UPD",(n,changes)))
         return ("UPD",(n,changes))
     
     def receive_END(self):
@@ -92,8 +93,7 @@ class Connector:
         self.connected = False
         return ("BYE")
 
-  
-    
+
 if __name__ == "__main__":    
     os.popen("VampiresVSWerewolvesGameServer.exe")
     time.sleep(1)
@@ -104,5 +104,4 @@ if __name__ == "__main__":
     connect.receive()
     connect.receive()
     connect.receive()
-    connect.stop() 
-
+    connect.stop()

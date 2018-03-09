@@ -4,6 +4,9 @@ import main
 import os
 import time
 import re
+import logging
+logging.basicConfig(level = logging.DEBUG)
+
 
 from threading import Thread
 
@@ -44,7 +47,7 @@ def analyse_games(ai1,ai2,log_list):
 
 for ai1 in ai_list:
     for ai2 in ai_list:
-        print(ai1,ai2)
+        logging.info(ai1,ai2)
         old_files = os.listdir(os.getcwd())
         os.popen("VampiresVSWerewolvesGameServer.exe")
         thread1 = AiThread(ai_list[ai1])

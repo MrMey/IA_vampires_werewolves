@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level = logging.DEBUG)
 
 class Grid:
     def __init__(self, height, width):
@@ -76,7 +78,7 @@ class Grid:
             liste = content[1]
             for i in range(0, n):
                 position = [ x for x in liste[i*5:i*5+5] ]
-                print(position)
+                logging.debug(position)
                 self.update_group(*position)
 
     def update_map(self,content):
@@ -84,12 +86,21 @@ class Grid:
         self.update_all_groups(content)
 
     def initiate_all_groups(self, content, ally_start):
+        """
+        group initiations called only at the begining.
+        Similar to update_all_group + species identification
+        args content :
+        args ally_start : tuple containing start position of our species 
+        return : 
+        """
         n = content[0]
         if n != 0:
             liste = content[1]
             for i in range(0, n):
+                # a group is identified by a 5-element tuple (x,y,human_nb,nb_wolves,nb_vampires)
                 position = [x for x in liste[i * 5:i * 5 + 5]]
                 if (position[0], position[1]) == ally_start:
+                    logging.debug("position tuple {} and ally start {}".format(position,ally_start))
                     if position[3] != 0:
                         self.set_species('vampires')
                     elif position[4] != 0:
@@ -97,66 +108,60 @@ class Grid:
                     else:
                         raise Exception("did not find our species")
 
-                print(position)
+                logging.debug(position)
                 self.update_group(*position)
 
-    def get_group_at(self, x, y):
+    def get_group_at(self, x,y):
         """Return the number of members in a cell"""
         hum = self.get_key(self.humans, (x,y))
-        al = self.get_key(self.vampires, (x,y))
-        en = self.get_key(self.wolves, (x,y))
-        return max(hum, al, en)
+        vam = self.get_key(self.vampires, (x,y))
+        wol = self.get_key(self.wolves, (x,y))
+        return max(hum, vam, wol)
 
     def get_number_of(self, species):
-        count = 0
         if species == 'HUM':
-            for hu in self.humans:
-                count += self.humans[hu]
+            return sum(self.humans.values())
         elif species == 'VAM':
-            for vampire in self.vampires:
-                count += self.vampires[vampire]
+            return sum(self.vampires.values())
         elif species == 'WOL':
-            for wolf in self.wolves:
-                count += self.wolves[wolf]
-        return count
+            return sum(self.wolves.values())
 
-    def get_distance(self, srce, dest):
-        return abs(dest[0]-srce[0])+abs(dest[1]-srce[1])
-    
     @staticmethod
     def get_closest_points(srce, dest):
         moves = []
         if srce[0] < dest[0]:
             if srce[1] < dest[1]:
-                moves = [[1, 1], [0, 1], [1, 0]] + moves
+                moves = [(1,1), (0,1), (1,0), (-1,1), (1,-1)] + moves
             elif srce[1] > dest[1]:
-                moves = [[1, -1], [0, -1], [1, 0]] + moves
+                moves = [(1,-1), (0,-1), (1,0),(-1,-1),(1,1)] + moves
             else:
-                moves = [[1, 0], [1, -1], [1, 1]] + moves
+                moves = [(1,0), (1,-1), (1,1), (0,-1), (0,1)] + moves
         elif srce[0] > dest[0]:
             if srce[1] < dest[1]:
-                moves = [[- 1, 1], [0, 1], [- 1, 0]] + moves
+                moves = [(-1,1), (0,1), (-1,0), (-1,-1), (1,1)] + moves
             elif srce[1] > dest[1]:
-                moves = [[- 1, - 1], [0, - 1], [- 1, 0]] + moves
+                moves = [(-1,-1), (0,-1), (-1,0), (1,-1), (-1,1)] + moves
             else:
-                moves = [[- 1, 0], [-1, -1], [-1, 1]] + moves
+                moves = [(-1,0), (-1,-1), (-1,1), (0,1), (0,-1)] + moves
         else:
             if srce[1] < dest[1]:
-                moves = [[0, 1], [-1, 1], [1, 1]] + moves
+                moves = [(0,1), (-1,1), (1,1), (1,0), (-1,0)] + moves
             elif srce[1] > dest[1]:
-                moves = [[0, - 1], [- 1, - 1], [1, -1]] + moves
-
+                moves = [(0,-1), (-1,-1), (1,-1), (1,0), (-1,0)] + moves
         return moves
 
     def get_range(self, pos):
-        offsets = [[1, 1], [1, 0], [1, -1], [0, -1],[-1, -1], [-1, 0], [-1, 1], [0, 1],[0,0]]
+        offsets = ((1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1), (0,1), (0,0))
         cells = []
         for idx in range(len(offsets)):
             x = pos[0] + offsets[idx][0]
             y = pos[1] + offsets[idx][1]
-            if self.is_in_map((x,y)) and not self.is_locked_cell((x,y)):
-                cells += [[x, y]]
+            if self.is_in_map((x,y)):
+                cells += [(x, y)]
         return cells
+
+    def get_ally_possible_moves(self,pos):
+        return [move for move in self.get_range(pos) if move not in self.locked_cell]
 
     def is_in_map(self, pos):
         return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
@@ -175,9 +180,3 @@ class Grid:
         for enemy in self.enemies:
             cells += self.get_range(enemy)
         return cells
-
-    """def compute_heuristic_simple(self, humans, allies, ennemies):
-        fitness = 0
-        for group in allies:
-            fitness += group.get_group_at(group[0], group[1]).number
-        return fitness"""
