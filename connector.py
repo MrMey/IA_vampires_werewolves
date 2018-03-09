@@ -10,13 +10,14 @@ import time
 import os
 import struct
 import logging
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level = logging.INFO)
 
 class Connector:
-    def __init__(self, ip, port, name='paul'):
+    def __init__(self, ip, port, name='paul', timeout = None):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((ip, port))
-        self.sock.settimeout(10)
+        if timeout:
+            self.sock.settimeout(timeout)
         self.name = name
         self.connected = True
         
@@ -59,7 +60,7 @@ class Connector:
     def receive_HUM(self):
         n = struct.unpack("1B",self.sock.recv(1))[0]
         coord = []
-        for i in range(n):
+        for _ in range(n):
             coord += [struct.unpack("1B",self.sock.recv(1))[0]]
             coord += [struct.unpack("1B",self.sock.recv(1))[0]]
         logging.debug(("HUM",(n,coord)))
@@ -74,7 +75,7 @@ class Connector:
     def receive_UPD(self):
         n = struct.unpack("1B",self.sock.recv(1))[0]
         changes = []
-        for i in range(n):
+        for _ in range(n):
             x = struct.unpack("1B",self.sock.recv(1))[0]
             y = struct.unpack("1B",self.sock.recv(1))[0]
             h = struct.unpack("1B",self.sock.recv(1))[0]

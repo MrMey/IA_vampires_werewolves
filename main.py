@@ -36,9 +36,9 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
     # initialise la carte
     grid = Grid(Set[1][0],Set[1][1])
 
-    # recoit HUM --inutile mais il faut quand même le recevoir
+    # recoit HUM —inutile mais il faut quand même le recevoir
     conn.receive()
-    # recoit HME -- utile pour identifier son espèce
+    # recoit HME — utile pour identifier son espèce
     hme = conn.receive()
 
     #
@@ -83,14 +83,16 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
         time.sleep(0.5)
 
 
+
 if __name__ == "__main__":
     args = sys.argv
-
     if args[0] != 'main.py':
         # if the program is not launched by command line then open the exe
         os.popen("VampiresVSWerewolvesGameServer.exe")
         execute('paul')
     elif len(args) < 3:
         raise(Exception('missing argument'))
-    else:
+    elif len(args) == 3:
         execute(name = 'paul', ip = args[1], port = int(args[2]))
+    elif len(args) == 5:
+        execute(name = args[1], algorithm= int(args[2]), ip = args[3], port = int(args[4]))
