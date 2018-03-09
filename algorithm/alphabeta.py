@@ -1,10 +1,16 @@
 import itertools
 import time
+import logging
 
 # from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
 STRATEGIES = ["convert", "attack", "flee"]
 DEPTH = 5
+
+cache = {}
+
+def cache_hash(humans, allies, enemies, depth, max):
+    return hash((hash(frozenset(humans.items())), hash(frozenset(allies.items())), hash(frozenset(enemies.items())), depth, max))
 
 
 def heuristic(humans, allies, enemies, probabilistic):
@@ -51,10 +57,13 @@ def heuristic(humans, allies, enemies, probabilistic):
                     # print(result)
                 else:
                     p = allies[ally] / (2 * enemies[enemy])
-                    result += (p**2) * allies[ally] / (max(1, dmin)) - ((1 - p)**2) * enemies[enemy] / (max(1, dmin))
+                    result += ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin)))
                     # print(result)
+        max_al = max(allies.values())
+        max_en = max(enemies.values())
+        result += max_al - max_en
     else:
-        result -= max(enemies.values())
+        result -= 100
     # print("{} {} {} {} heuristic: {}\n".format(humans, allies, enemies, probabilistic, result))
     return result
 
@@ -69,6 +78,14 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
     if depth <= 0:
         return h
     else:
+        hash_code = cache_hash(humans, allies, enemies, depth, True)
+        if hash_code in cache:
+            # logging.debug("CACHE HIT")
+            if get_moves:
+                return cache[hash_code][1]
+            else:
+                return cache[hash_code][0]
+        logging.debug("CACHE MISS")
         inter = interval
         children = get_relevant_children(humans, allies, enemies, dimensions)
         if len(children) == 0:
@@ -90,6 +107,7 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
             # print(inter)
             """if depth == 6:
                 print(child, intervals)"""
+        cache[hash_code] = (inter[0], move)
         if get_moves:
             # print("FINAL MOVE: {}\n".format(move))
             return move
@@ -102,6 +120,11 @@ def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
     if depth <= 0:
         return h
     else:
+        hash_code = cache_hash(humans, allies, enemies, depth, False)
+        if hash_code in cache:
+            # logging.debug("CACHE HIT")
+            return cache[hash_code][0]
+        logging.debug("CACHE MISS")
         inter = interval
         children = get_relevant_children_enemies(humans, allies, enemies, dimensions)
         if len(children) == 0:
@@ -123,6 +146,7 @@ def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
                 inter = (inter[0], val)
             # print(inter)
         # print("FINAL MOVE: {}\n".format(move))
+        cache[hash_code] = (inter[1], move)
         return inter[1]
 
 

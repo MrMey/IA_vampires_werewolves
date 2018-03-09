@@ -39,15 +39,17 @@ class Actor:
             for ally in dest:
                 move = [ally[0], ally[1], dest[ally][2], dest[ally][0], dest[ally][1]]
                 logging.debug("move {}".format(move))
-                self.queue += move
+                self.queue.append(move)
 
 
     def send_moves(self):
         paquet = bytes()
         paquet += 'MOV'.encode()
         paquet += struct.pack('B', len(self.queue))
+        logging.debug("queue {}".format(self.queue))
         for move in self.queue:
             for el in move:
+                logging.debug(el)
                 # need to use usigned byte to go up to 255 units
                 paquet += struct.pack('B', el)
         return paquet
