@@ -46,10 +46,8 @@ class Actor:
         paquet = bytes()
         paquet += 'MOV'.encode()
         paquet += struct.pack('B', len(self.queue))
-        logging.debug("queue {}".format(self.queue))
         for move in self.queue:
             for el in move:
-                logging.debug(el)
                 # need to use usigned byte to go up to 255 units
                 paquet += struct.pack('B', el)
         return paquet

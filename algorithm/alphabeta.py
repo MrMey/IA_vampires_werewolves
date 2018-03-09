@@ -9,6 +9,9 @@ DEPTH = 5
 
 cache = {}
 
+covered_branches = 0
+
+
 def cache_hash(humans, allies, enemies, depth, max):
     return hash((hash(frozenset(humans.items())), hash(frozenset(allies.items())), hash(frozenset(enemies.items())), depth, max))
 
@@ -21,50 +24,49 @@ def heuristic(humans, allies, enemies, probabilistic):
     toph = time.time()
     result = 2*(sum(allies.values()) - sum(enemies.values()))
     # print(result)
-    if not probabilistic:
-        for human in humans:
-            min_dist_al = None
-            for ally in allies:
-                d = max(abs(ally[0] - human[0]), abs(ally[1] - human[1]))
-                if (min_dist_al is None or d < min_dist_al) and allies[ally] > humans[human]:
-                    min_dist_al = d
-            min_dist_en = None
-            for enemy in enemies:
-                d = max(abs(enemy[0] - human[0]), abs(enemy[1] - human[1]))
-                if min_dist_en is None or d < min_dist_en and enemies[enemy] > humans[human]:
-                    min_dist_en = d
-            if (min_dist_en is None and min_dist_al is not None) or (min_dist_en is not None and min_dist_al is not None
-                                                                     and min_dist_al < min_dist_en):
-                result += humans[human] / (max(1, min_dist_al))
-                # print(result)
-            elif min_dist_en is not None:
-                result -= humans[human] / (max(1, min_dist_en))
-                # print(result)
+    for human in humans:
+        min_dist_al = None
         for ally in allies:
-            dmin = None
-            enemy = None
-            for en in enemies:
-                d = max(abs(ally[0] - en[0]), abs(ally[1] - en[1]))
-                if dmin is None or d < dmin:
-                    dmin = d
-                    enemy = en
-            if dmin is not None:
-                if allies[ally] > 1.5 * enemies[enemy]:
-                    result += enemies[enemy] / (max(1, dmin))
-                    # print(result)
-                elif 1.5 * allies[ally] < enemies[enemy]:
-                    result -= allies[ally] / (max(1, dmin))
-                    # print(result)
-                else:
-                    p = allies[ally] / (2 * enemies[enemy])
-                    result += ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin)))
-                    # print(result)
+            d = max(abs(ally[0] - human[0]), abs(ally[1] - human[1]))
+            if (min_dist_al is None or d < min_dist_al) and allies[ally] > humans[human]:
+                min_dist_al = d
+        min_dist_en = None
+        for enemy in enemies:
+            d = max(abs(enemy[0] - human[0]), abs(enemy[1] - human[1]))
+            if min_dist_en is None or d < min_dist_en and enemies[enemy] > humans[human]:
+                min_dist_en = d
+        if (min_dist_en is None and min_dist_al is not None) or (min_dist_en is not None and min_dist_al is not None
+                                                                 and min_dist_al < min_dist_en):
+            result += humans[human] / (max(1, min_dist_al))
+            # print(result)
+        elif min_dist_en is not None:
+            result -= humans[human] / (max(1, min_dist_en))
+            # print(result)
+    for ally in allies:
+        dmin = None
+        enemy = None
+        for en in enemies:
+            d = max(abs(ally[0] - en[0]), abs(ally[1] - en[1]))
+            if dmin is None or d < dmin:
+                dmin = d
+                enemy = en
+        if dmin is not None:
+            if allies[ally] > 1.5 * enemies[enemy]:
+                result += enemies[enemy] / (max(1, dmin))
+                # print(result)
+            elif 1.5 * allies[ally] < enemies[enemy]:
+                result -= allies[ally] / (max(1, dmin))
+                # print(result)
+            else:
+                p = allies[ally] / (2 * enemies[enemy])
+                result += ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin)))
+                # print(result)
+    if probabilistic :
         max_al = max(allies.values())
         max_en = max(enemies.values())
-        result += max_al - max_en
-    else:
-        result -= 100
-    # print("{} {} {} {} heuristic: {}\n".format(humans, allies, enemies, probabilistic, result))
+        if 1.5*max_en >= max_al:
+            result -= 100
+        # print("{} {} {} {} heuristic: {}\n".format(humans, allies, enemies, probabilistic, result))
     return result
 
 
@@ -73,19 +75,23 @@ def get_next_move_alpha_beta(depth, grid):
 
 
 def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_moves=False):
-    # print("MAX {}".format(depth))
+    # logging.debug("MAX {}".format(depth))
+    if get_moves:
+        global covered_branches
+        covered_branches = 0
     h = heuristic(humans, allies, enemies, False)
     if depth <= 0:
         return h
     else:
         hash_code = cache_hash(humans, allies, enemies, depth, True)
         if hash_code in cache:
-            # logging.debug("CACHE HIT")
+            #logging.debug("CACHE HIT")
             if get_moves:
+                covered_branches = 1
                 return cache[hash_code][1]
             else:
                 return cache[hash_code][0]
-        logging.debug("CACHE MISS")
+        #logging.debug("CACHE MISS")
         inter = interval
         children = get_relevant_children(humans, allies, enemies, dimensions)
         if len(children) == 0:
@@ -105,8 +111,8 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
                 move = child[3]
                 inter = (val, inter[1])
             # print(inter)
-            """if depth == 6:
-                print(child, intervals)"""
+            if get_moves:
+                covered_branches += 1/len(children)
         cache[hash_code] = (inter[0], move)
         if get_moves:
             # print("FINAL MOVE: {}\n".format(move))
@@ -115,7 +121,7 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
 
 
 def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
-    # print("MIN {}".format(depth))
+    # logging.debug("MIN {}".format(depth))
     h = heuristic(humans, allies, enemies, False)
     if depth <= 0:
         return h
@@ -124,7 +130,7 @@ def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
         if hash_code in cache:
             # logging.debug("CACHE HIT")
             return cache[hash_code][0]
-        logging.debug("CACHE MISS")
+        # logging.debug("CACHE MISS")
         inter = interval
         children = get_relevant_children_enemies(humans, allies, enemies, dimensions)
         if len(children) == 0:
@@ -162,6 +168,20 @@ def get_relevant_children(humans, allies, enemies, dimensions):
     # print("dimensions: {}".format(dimensions))
     moves = {ally: [(ally[0] + i, ally[1] + j, allies[ally]) for i in range(-1, 2) for j in range(-1, 2)
                     if 0 <= ally[0] + i < dimensions[0] and 0 <= ally[1] + j < dimensions[1]] for ally in allies}
+    if len(allies) >= 2*len(enemies):
+        # logging.debug("allies {}".format(allies))
+        # logging.debug("enemies {}".format(enemies))
+        min_en = min(enemies.values())
+        update = {ally: [(ally[0], ally[1], allies[ally])] for ally in allies if allies[ally] < min_en}
+        if len(update) < len(allies):
+            # logging.debug("UPDATE {}".format(update))
+            """logging.debug("min_en {}".format(min_en))
+            logging.debug("moves before update {}".format(moves))
+            logging.debug("update {}".format(update))"""
+            moves.update(update)
+        else:
+            moves = {}
+    # logging.debug("moves after update {}".format(moves))
     return get_children_from_moves(humans, allies, enemies, moves)
 
 
