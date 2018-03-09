@@ -29,13 +29,19 @@ def csp(grid):
             D[(i,j)] = get_distance(a[i], h[j][1])
             M[(i,j)] = model.addVar(name='%s, %s' % (i,j), vtype='B')
 
+    # Nb d'alliés > Nb d'humains
     for k in range(n):
         model.addCons(quicksum(M[(i,k)] for i in range(m)) >= h[k][0])
 
+    # Un allié n'attaque qu'un seul groupe d'humains
     for k in range(m):
         model.addCons(quicksum(M[(k,j)] for j in range(n)) <= 1)
 
-    model.setObjective(quicksum(M[(i,j)]*D[(i,j)] for i in range(m) for j in range(n)), 'minimize')
+    alpha, beta = 0.5, 0.5
+    obj_1 = quicksum(quicksum(M[(i,j)] for i in range(m))-h[j] for j in range(n))
+    obj_2 = quicksum(M[(i,j)]*D[(i,j)] for i in range(m) for j in range(n))
+    model.setObjective(alpha*obj_1+beta*obj_2, 'minimize')
+
     model.optimize()
     print(model.getObjVal())
     vars = model.getVars()
