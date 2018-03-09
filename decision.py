@@ -8,7 +8,8 @@ import struct
 import logging
 logging.basicConfig(level = logging.DEBUG)
 
-from algorithm.greedy import get_dest
+from algorithm import greedy
+from algorithm import splittercell
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -22,19 +23,20 @@ class Actor:
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
             if self.algorithm == 1:
-                dest = get_dest(grid, ally)
+                move = greedy.get_dest(grid, ally)
 
             elif self.algorithm == 2:
                 #dest = ...
                 pass #to link with alpha beta algo
 
+            elif self.algorithm == 3:
+                move = splittercell.get_dest(grid, ally)
 
-            move = (ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])
-            logging.debug("move {} units from {} to {}".format(grid.get_group_at(ally[0],ally[1]),ally,dest))
+            logging.debug("move {}".format(move))
 
 
-            self.queue.append(move)
-            grid.add_locked_cell(dest)
+            self.queue += move # move must be a list
+            
 
     def send_moves(self):
         paquet = bytes()

@@ -111,7 +111,7 @@ class Grid:
                 logging.debug(position)
                 self.update_group(*position)
 
-    def get_group_at(self, x, y):
+    def get_group_at(self, x,y):
         """Return the number of members in a cell"""
         hum = self.get_key(self.humans, (x,y))
         vam = self.get_key(self.vampires, (x,y))
