@@ -84,6 +84,7 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
         turn += 1
 
 
+
 if __name__ == "__main__":
     args = sys.argv
     if args[0] != 'main.py':
