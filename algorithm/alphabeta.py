@@ -4,8 +4,8 @@ import logging
 
 from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
-STRATEGIES = ["convert", "attack", "flee"]
-DEPTH = 5
+STRATEGIES = ["convert", "attack", "flee", "final_rounds"]
+DEPTH = 7
 
 cache = {}
 
@@ -154,10 +154,14 @@ def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
 
 def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     moves = {ally: [] for ally in allies}
+    min_en = min(enemies.values())
     for ally in moves:
-        for strategy in STRATEGIES:
-            moves[ally].extend(best_next_move_for_strategy(strategy, ally, humans, allies, enemies))
-    return get_children_from_moves(humans, allies, enemies, moves)
+        if not is_enemies or allies[ally] >= min_en:
+            for strategy in STRATEGIES:
+                moves[ally].extend(best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1))
+        else:
+            moves[ally].append((ally[0], ally[1], allies[ally]))
+    return get_children_from_moves(humans, allies, enemies, moves, is_enemies)
 
 
 """def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
@@ -178,7 +182,7 @@ def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     return get_children_from_moves(humans, allies, enemies, moves)"""
 
 
-def get_children_from_moves(humans, allies, enemies, moves):
+def get_children_from_moves(humans, allies, enemies, moves, is_enemies):
     # print(moves)
     children = []
     i = 0
@@ -192,12 +196,13 @@ def get_children_from_moves(humans, allies, enemies, moves):
     p = set(itertools.product(*moves_for_allies))
     # print("BEGIN")
     for moves_set in p:
+        #logging.debug(moves_set)
         if is_actual_move(moves_set, corr):
             new_humans, new_allies, new_enemies, probabilistic = dict(humans), dict(allies), dict(enemies), False
             for i in range(len(moves_set)):
                 temp = get_child_from_move(new_humans, new_allies, new_enemies, corr[i], (moves_set[i][0],
                                                                                           moves_set[i][1]),
-                                           moves_set[i][2])
+                                           moves_set[i][2], is_enemies)
                 new_humans, new_allies, new_enemies, probabilistic = temp[0], temp[1], temp[2], probabilistic or temp[3]
             children.append(
                 (new_humans, new_allies, new_enemies, {corr[i]: moves_set[i] for i in range(len(moves_set))},
@@ -205,7 +210,7 @@ def get_children_from_moves(humans, allies, enemies, moves):
     return children
 
 
-def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination, number):
+def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination, number, is_enemies):
     probabilistic = 0
     if number == new_allies[origin]:
         del new_allies[origin]
@@ -220,7 +225,10 @@ def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination
             p = number / (2 * t)
             new_allies[destination] = (p ** 2) * (number + t)
             new_humans[destination] = ((1 - p) ** 2) * t
-            probabilistic = number*(1-p)*(p+1)
+            if is_enemies:
+                probabilistic -= number*(p+1)
+            else:
+                probabilistic += number*(p+1)
     elif destination in new_allies:
         new_allies[destination] += number
     elif destination in new_enemies:
@@ -237,7 +245,10 @@ def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination
                 p = (number / t) - 0.5
             new_allies[destination] = (p ** 2) * number
             new_enemies[destination] = ((1 - p) ** 2) * t
-            probabilistic = number*(1-p)*(p+1)
+            if is_enemies:
+                probabilistic -= number*(1-p)*(p+1)
+            else:
+                probabilistic += number*(1-p)*(p+1)
     else:
         new_allies[destination] = number
     return new_humans, new_allies, new_enemies, probabilistic
@@ -259,6 +270,7 @@ def get_relevant_children_enemies(humans, allies, enemies, dimensions):
 
 
 def get_dest_alpha_beta(grid):
+    # logging.debug("cache length: {}".format(len(cache)))
     return get_next_move_alpha_beta(DEPTH, grid)
 
 
