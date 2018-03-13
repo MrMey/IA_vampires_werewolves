@@ -2,7 +2,7 @@ import itertools
 import time
 import logging
 
-# from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
+from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
 STRATEGIES = ["convert", "attack", "flee"]
 DEPTH = 5
@@ -24,49 +24,45 @@ def heuristic(humans, allies, enemies, probabilistic):
     toph = time.time()
     result = 2*(sum(allies.values()) - sum(enemies.values()))
     # print(result)
-    for human in humans:
-        min_dist_al = None
+    if probabilistic == 0:
+        for human in humans:
+            min_dist_al = None
+            for ally in allies:
+                d = max(abs(ally[0] - human[0]), abs(ally[1] - human[1]))
+                if (min_dist_al is None or d < min_dist_al) and allies[ally] > humans[human]:
+                    min_dist_al = d
+            min_dist_en = None
+            for enemy in enemies:
+                d = max(abs(enemy[0] - human[0]), abs(enemy[1] - human[1]))
+                if min_dist_en is None or d < min_dist_en and enemies[enemy] > humans[human]:
+                    min_dist_en = d
+            if (min_dist_en is None and min_dist_al is not None) or (min_dist_en is not None and min_dist_al is not None
+                                                                     and min_dist_al < min_dist_en):
+                result += humans[human] / (max(1, min_dist_al))
+                # print(result)
+            elif min_dist_en is not None:
+                result -= humans[human] / (max(1, min_dist_en))
+                # print(result)
         for ally in allies:
-            d = max(abs(ally[0] - human[0]), abs(ally[1] - human[1]))
-            if (min_dist_al is None or d < min_dist_al) and allies[ally] > humans[human]:
-                min_dist_al = d
-        min_dist_en = None
-        for enemy in enemies:
-            d = max(abs(enemy[0] - human[0]), abs(enemy[1] - human[1]))
-            if min_dist_en is None or d < min_dist_en and enemies[enemy] > humans[human]:
-                min_dist_en = d
-        if (min_dist_en is None and min_dist_al is not None) or (min_dist_en is not None and min_dist_al is not None
-                                                                 and min_dist_al < min_dist_en):
-            result += humans[human] / (max(1, min_dist_al))
-            # print(result)
-        elif min_dist_en is not None:
-            result -= humans[human] / (max(1, min_dist_en))
-            # print(result)
-    for ally in allies:
-        dmin = None
-        enemy = None
-        for en in enemies:
-            d = max(abs(ally[0] - en[0]), abs(ally[1] - en[1]))
-            if dmin is None or d < dmin:
-                dmin = d
-                enemy = en
-        if dmin is not None:
-            if allies[ally] > 1.5 * enemies[enemy]:
-                result += enemies[enemy] / (max(1, dmin))
-                # print(result)
-            elif 1.5 * allies[ally] < enemies[enemy]:
-                result -= allies[ally] / (max(1, dmin))
-                # print(result)
-            else:
-                p = allies[ally] / (2 * enemies[enemy])
-                result += ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin)))
-                # print(result)
-    if probabilistic :
-        max_al = max(allies.values())
-        max_en = max(enemies.values())
-        if 1.5*max_en >= max_al:
-            result -= 100
-        # print("{} {} {} {} heuristic: {}\n".format(humans, allies, enemies, probabilistic, result))
+            dmin = None
+            enemy = None
+            for en in enemies:
+                d = max(abs(ally[0] - en[0]), abs(ally[1] - en[1]))
+                if dmin is None or d < dmin:
+                    dmin = d
+                    enemy = en
+            if dmin is not None:
+                if allies[ally] > 1.5 * enemies[enemy]:
+                    result += enemies[enemy] / (max(1, dmin))
+                    # print(result)
+                elif 1.5 * allies[ally] < enemies[enemy]:
+                    result -= allies[ally] / (max(1, dmin))
+                    # print(result)
+                else:
+                    p = allies[ally] / (2 * enemies[enemy])
+                    result += ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin)))
+                    # print(result)
+    result -= 2*probabilistic
     return result
 
 
@@ -93,7 +89,7 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
                 return cache[hash_code][0]
         #logging.debug("CACHE MISS")
         inter = interval
-        children = get_relevant_children(humans, allies, enemies, dimensions)
+        children = get_relevant_children(humans, allies, enemies, dimensions, False)
         if len(children) == 0:
             return h
         i = 0
@@ -156,33 +152,30 @@ def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
         return inter[1]
 
 
-"""def get_relevant_children(humans, allies, enemies):
+def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     moves = {ally: [] for ally in allies}
     for ally in moves:
         for strategy in STRATEGIES:
             moves[ally].extend(best_next_move_for_strategy(strategy, ally, humans, allies, enemies))
-    return get_children_from_moves(humans, allies, enemies, moves)"""
+    return get_children_from_moves(humans, allies, enemies, moves)
 
 
-def get_relevant_children(humans, allies, enemies, dimensions):
+"""def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     # print("dimensions: {}".format(dimensions))
     moves = {ally: [(ally[0] + i, ally[1] + j, allies[ally]) for i in range(-1, 2) for j in range(-1, 2)
                     if 0 <= ally[0] + i < dimensions[0] and 0 <= ally[1] + j < dimensions[1]] for ally in allies}
-    if len(allies) >= 2*len(enemies):
+    if is_enemies and len(allies) >= 2*len(enemies):
         # logging.debug("allies {}".format(allies))
         # logging.debug("enemies {}".format(enemies))
         min_en = min(enemies.values())
         update = {ally: [(ally[0], ally[1], allies[ally])] for ally in allies if allies[ally] < min_en}
         if len(update) < len(allies):
             # logging.debug("UPDATE {}".format(update))
-            """logging.debug("min_en {}".format(min_en))
-            logging.debug("moves before update {}".format(moves))
-            logging.debug("update {}".format(update))"""
             moves.update(update)
         else:
             moves = {}
     # logging.debug("moves after update {}".format(moves))
-    return get_children_from_moves(humans, allies, enemies, moves)
+    return get_children_from_moves(humans, allies, enemies, moves)"""
 
 
 def get_children_from_moves(humans, allies, enemies, moves):
@@ -213,7 +206,7 @@ def get_children_from_moves(humans, allies, enemies, moves):
 
 
 def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination, number):
-    probabilistic = False
+    probabilistic = 0
     if number == new_allies[origin]:
         del new_allies[origin]
     else:
@@ -227,7 +220,7 @@ def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination
             p = number / (2 * t)
             new_allies[destination] = (p ** 2) * (number + t)
             new_humans[destination] = ((1 - p) ** 2) * t
-            probabilistic = True
+            probabilistic = number*(1-p)*(p+1)
     elif destination in new_allies:
         new_allies[destination] += number
     elif destination in new_enemies:
@@ -244,7 +237,7 @@ def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination
                 p = (number / t) - 0.5
             new_allies[destination] = (p ** 2) * number
             new_enemies[destination] = ((1 - p) ** 2) * t
-            probabilistic = True
+            probabilistic = number*(1-p)*(p+1)
     else:
         new_allies[destination] = number
     return new_humans, new_allies, new_enemies, probabilistic
@@ -258,7 +251,7 @@ def is_actual_move(moves_set, corr):
 
 
 def get_relevant_children_enemies(humans, allies, enemies, dimensions):
-    children_wrong_order = get_relevant_children(humans, enemies, allies, dimensions)
+    children_wrong_order = get_relevant_children(humans, enemies, allies, dimensions, True)
     children = []
     for child in children_wrong_order:
         children.append((child[0], child[2], child[1], child[3], child[4]))

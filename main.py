@@ -18,7 +18,7 @@ from decision import Actor
 
 EMULATE_SERVER = True
 
-def execute(name, algorithm=1, ip = "127.0.0.1", port = 5555):
+def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
     """
 
     :param name: name of the ai
