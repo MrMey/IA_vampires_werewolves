@@ -43,9 +43,10 @@ class Actor:
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
             for ally in dest:
-                move = [ally[0], ally[1], dest[ally][2], dest[ally][0], dest[ally][1]]
-                logging.debug("move {}".format(move))
-                self.queue.append(move)
+                for destination in dest[ally]:
+                    move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                    logging.debug("move {}".format(move))
+                    self.queue.append(move)
             logging.debug("decision duration: {}".format(time() - top))
 
 

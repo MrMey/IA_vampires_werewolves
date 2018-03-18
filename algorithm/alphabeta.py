@@ -4,8 +4,8 @@ import logging
 
 from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
-STRATEGIES = ["convert", "attack", "flee", "final_rounds"]
-DEPTH = 7
+STRATEGIES = ["convert", "attack", "flee", "final_rounds", "split"]
+DEPTH = 3
 
 cache = {}
 
@@ -160,19 +160,19 @@ def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
             for strategy in STRATEGIES:
                 moves[ally].extend(best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1))
         else:
-            moves[ally].append((ally[0], ally[1], allies[ally]))
+            moves[ally].append(((ally[0], ally[1], allies[ally]),))
     return get_children_from_moves(humans, allies, enemies, moves, is_enemies)
 
 
 """def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     # print("dimensions: {}".format(dimensions))
-    moves = {ally: [(ally[0] + i, ally[1] + j, allies[ally]) for i in range(-1, 2) for j in range(-1, 2)
+    moves = {ally: [((ally[0] + i, ally[1] + j, allies[ally]),) for i in range(-1, 2) for j in range(-1, 2)
                     if 0 <= ally[0] + i < dimensions[0] and 0 <= ally[1] + j < dimensions[1]] for ally in allies}
     if is_enemies and len(allies) >= 2*len(enemies):
         # logging.debug("allies {}".format(allies))
         # logging.debug("enemies {}".format(enemies))
         min_en = min(enemies.values())
-        update = {ally: [(ally[0], ally[1], allies[ally])] for ally in allies if allies[ally] < min_en}
+        update = {ally: [((ally[0], ally[1], allies[ally]),)] for ally in allies if allies[ally] < min_en}
         if len(update) < len(allies):
             # logging.debug("UPDATE {}".format(update))
             moves.update(update)
@@ -193,6 +193,7 @@ def get_children_from_moves(humans, allies, enemies, moves, is_enemies):
         i += 1
         moves_for_allies.append(moves[ally])
     moves_for_allies = tuple(moves_for_allies)
+    #print(*moves_for_allies)
     p = set(itertools.product(*moves_for_allies))
     # print("BEGIN")
     for moves_set in p:
@@ -200,9 +201,7 @@ def get_children_from_moves(humans, allies, enemies, moves, is_enemies):
         if is_actual_move(moves_set, corr):
             new_humans, new_allies, new_enemies, probabilistic = dict(humans), dict(allies), dict(enemies), False
             for i in range(len(moves_set)):
-                temp = get_child_from_move(new_humans, new_allies, new_enemies, corr[i], (moves_set[i][0],
-                                                                                          moves_set[i][1]),
-                                           moves_set[i][2], is_enemies)
+                temp = get_child_from_move(new_humans, new_allies, new_enemies, corr[i], moves_set[i], is_enemies)
                 new_humans, new_allies, new_enemies, probabilistic = temp[0], temp[1], temp[2], probabilistic or temp[3]
             children.append(
                 (new_humans, new_allies, new_enemies, {corr[i]: moves_set[i] for i in range(len(moves_set))},
@@ -210,53 +209,58 @@ def get_children_from_moves(humans, allies, enemies, moves, is_enemies):
     return children
 
 
-def get_child_from_move(new_humans, new_allies, new_enemies, origin, destination, number, is_enemies):
+def get_child_from_move(new_humans, new_allies, new_enemies, origin, list_of_moves, is_enemies):
     probabilistic = 0
-    if number == new_allies[origin]:
-        del new_allies[origin]
-    else:
-        new_allies[origin] -= number
-    if destination in new_humans:
-        t = new_humans[destination]
-        if number > new_humans[destination]:
-            del new_humans[destination]
-            new_allies[destination] = number + t
+    # print(origin, list_of_moves)
+    for move in list_of_moves:
+        # print(move)
+        destination = (move[0], move[1])
+        number = move[2]
+        if number == new_allies[origin]:
+            del new_allies[origin]
         else:
-            p = number / (2 * t)
-            new_allies[destination] = (p ** 2) * (number + t)
-            new_humans[destination] = ((1 - p) ** 2) * t
-            if is_enemies:
-                probabilistic -= number*(p+1)
+            new_allies[origin] -= number
+        if destination in new_humans:
+            t = new_humans[destination]
+            if number > new_humans[destination]:
+                del new_humans[destination]
+                new_allies[destination] = number + t
             else:
-                probabilistic += number*(p+1)
-    elif destination in new_allies:
-        new_allies[destination] += number
-    elif destination in new_enemies:
-        t = new_enemies[destination]
-        if number > 1.5 * t:
-            del new_enemies[destination]
+                p = number / (2 * t)
+                new_allies[destination] = (p ** 2) * (number + t)
+                new_humans[destination] = ((1 - p) ** 2) * t
+                if is_enemies:
+                    probabilistic -= number*(p+1)
+                else:
+                    probabilistic += number*(p+1)
+        elif destination in new_allies:
+            new_allies[destination] += number
+        elif destination in new_enemies:
+            t = new_enemies[destination]
+            if number > 1.5 * t:
+                del new_enemies[destination]
+                new_allies[destination] = number
+            else:
+                if number == t:
+                    p = 0.5
+                elif number < t:
+                    p = number/(2*t)
+                else:
+                    p = (number / t) - 0.5
+                new_allies[destination] = (p ** 2) * number
+                new_enemies[destination] = ((1 - p) ** 2) * t
+                if is_enemies:
+                    probabilistic -= number*(1-p)*(p+1)
+                else:
+                    probabilistic += number*(1-p)*(p+1)
+        else:
             new_allies[destination] = number
-        else:
-            if number == t:
-                p = 0.5
-            elif number < t:
-                p = number/(2*t)
-            else:
-                p = (number / t) - 0.5
-            new_allies[destination] = (p ** 2) * number
-            new_enemies[destination] = ((1 - p) ** 2) * t
-            if is_enemies:
-                probabilistic -= number*(1-p)*(p+1)
-            else:
-                probabilistic += number*(1-p)*(p+1)
-    else:
-        new_allies[destination] = number
     return new_humans, new_allies, new_enemies, probabilistic
 
 
 def is_actual_move(moves_set, corr):
     for i in range(len(corr)):
-        if corr[i] != (moves_set[i][0], moves_set[i][1]):
+        if len(moves_set[i]) > 1 or corr[i] != (moves_set[i][0][0], moves_set[i][0][1]):
             return True
     return False
 
