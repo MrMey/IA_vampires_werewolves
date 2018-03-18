@@ -74,6 +74,7 @@ class Grid:
 
     def update_all_groups(self,content):
         n = content[0]
+        self.next_positions = {}
         if n != 0:
             liste = content[1]
             for i in range(0, n):
@@ -126,29 +127,34 @@ class Grid:
         elif species == 'WOL':
             return sum(self.wolves.values())
 
-    @staticmethod
-    def get_closest_points(srce, dest):
+    def get_closest_points(self, srce, dest):
         moves = []
         if srce[0] < dest[0]:
             if srce[1] < dest[1]:
-                moves = [(1,1), (0,1), (1,0), (-1,1), (1,-1)] + moves
+                moves = [(1,1), (0,1), (1,0), (-1,1), (1,-1), (-1,0), (0,-1), (-1,-1)] + moves
             elif srce[1] > dest[1]:
-                moves = [(1,-1), (0,-1), (1,0),(-1,-1),(1,1)] + moves
+                moves = [(1,-1), (0,-1), (1,0), (-1,-1), (1,1), (-1,0), (0,1), (-1,1)] + moves
             else:
-                moves = [(1,0), (1,-1), (1,1), (0,-1), (0,1)] + moves
+                moves = [(1,0), (1,-1), (1,1), (0,-1), (0,1), (-1,-1), (-1,1), (-1,0)] + moves
         elif srce[0] > dest[0]:
             if srce[1] < dest[1]:
-                moves = [(-1,1), (0,1), (-1,0), (-1,-1), (1,1)] + moves
+                moves = [(-1,1), (0,1), (-1,0), (-1,-1), (1,1), (1,0), (0,-1), (1,-1)] + moves
             elif srce[1] > dest[1]:
-                moves = [(-1,-1), (0,-1), (-1,0), (1,-1), (-1,1)] + moves
+                moves = [(-1,-1), (0,-1), (-1,0), (1,-1), (-1,1), (1,0), (0,1), (1,1)] + moves
             else:
-                moves = [(-1,0), (-1,-1), (-1,1), (0,1), (0,-1)] + moves
+                moves = [(-1,0), (-1,-1), (-1,1), (0,1), (0,-1), (1,1), (1,-1), (1,0)] + moves
         else:
             if srce[1] < dest[1]:
-                moves = [(0,1), (-1,1), (1,1), (1,0), (-1,0)] + moves
+                moves = [(0,1), (-1,1), (1,1), (1,0), (-1,0), (1,-1), (-1,-1), (0,-1)] + moves
             elif srce[1] > dest[1]:
-                moves = [(0,-1), (-1,-1), (1,-1), (1,0), (-1,0)] + moves
-        return moves
+                moves = [(0,-1), (-1,-1), (1,-1), (1,0), (-1,0), (1,1), (-1,1), (0,1)] + moves
+        next_pos = []
+        for move in moves:
+            x = srce[0]+move[0]
+            y = srce[1]+move[1]
+            if 0 <= x < self.height and 0 <= y < self.width:
+                next_pos.append((x,y))
+        return next_pos
 
     def get_range(self, pos):
         offsets = ((1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1), (0,1), (0,0))

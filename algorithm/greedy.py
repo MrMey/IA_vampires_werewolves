@@ -11,20 +11,17 @@ def get_distance(srce, dest):
     return max(abs(dest[0] - srce[0]), abs(dest[1] - srce[1]))
 
 
-def get_closest_point(grid, srce, dest):
-    moves = Grid.get_closest_points(srce, dest)
+def get_closest_point(grid, srce, dest, avoid_enemies = True):
+    moves = grid.get_closest_points(srce, dest)
     idx = 0
     iter_pos = True
     while iter_pos and idx < len(moves):
         # if all conditions are met then choose position else iterates
         iter_pos = False
-        next_pos = (srce[0] + moves[idx][0], srce[1] + moves[idx][1])
+        next_pos = moves[idx]
         logging.debug('next_post {} vs ally {}'.format(next_pos, grid.allies[srce]))
 
-        if next_pos not in grid.get_range(srce):
-            logging.debug('destination not in range {}'.format(grid.get_range(srce)))
-            iter_pos = True
-        elif next_pos in grid.get_enemy_range():
+        if next_pos in grid.get_enemy_range():
             logging.debug('destination in enemy range')
             iter_pos = True
         elif next_pos in grid.humans:
@@ -32,7 +29,7 @@ def get_closest_point(grid, srce, dest):
                 logging.debug('destination in human range')
                 iter_pos = True
         idx += 1
-    return srce[0] + moves[idx-1][0], srce[1] + moves[idx-1][1]
+    return moves[idx-1][0], moves[idx-1][1]
 
 
 

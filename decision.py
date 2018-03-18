@@ -13,6 +13,7 @@ logging.basicConfig(level = logging.DEBUG)
 from algorithm import greedy
 from algorithm import splittercell
 from algorithm import alphabeta
+from algorithm import multisplit
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -21,7 +22,7 @@ class Actor:
         self.target = []
 
     def action(self,grid):
-        if self.algorithm in [1, 3]:
+        if self.algorithm in [1, 3, 4]:
             for ally in grid.allies:
                 logging.debug("humans: {}".format(grid.humans))
                 logging.debug("allies: {}".format(grid.allies))
@@ -30,7 +31,10 @@ class Actor:
                     move = greedy.get_dest(grid, ally)
                 elif self.algorithm == 3:
                     move = splittercell.get_dest(grid, ally)
-                logging.debug("move {}".format(move))
+                elif self.algorithm == 4:
+                    move = multisplit.get_dest(grid, ally)
+
+                # move must be a list
                 self.queue += move
         elif self.algorithm == 2:
             top = time()
