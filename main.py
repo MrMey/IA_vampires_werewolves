@@ -93,7 +93,7 @@ if __name__ == "__main__":
         execute('paul')
     elif len(args) < 3:
         raise(Exception('missing argument'))
-    elif len(args) == 3:
-        execute(name = 'paul', ip = args[1], port = int(args[2]))
+    elif len(args) == 4:
+        execute(name = args[1], ip = args[2], port = int(args[3]))
     elif len(args) == 5:
-        execute(name = args[1], algorithm= int(args[2]), ip = args[3], port = int(args[4]))
+        execute(name = args[1], algorithm = int(args[2]), ip = args[3], port = int(args[4]))

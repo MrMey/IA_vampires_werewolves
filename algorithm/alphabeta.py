@@ -165,8 +165,20 @@ def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     min_en = min(enemies.values())
     for ally in moves:
         if not is_enemies or allies[ally] >= min_en:
-            for strategy in STRATEGIES:
-                moves[ally] = moves[ally].union(best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1))
+            if humans != {}:
+                for strategy in STRATEGIES:
+                    moves[ally] = moves[ally].union(
+                        best_next_move_for_strategy(
+                            strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1
+                        )
+                    )
+            else:
+                for strategy in ['attack', 'flee', 'final_rounds']:
+                    moves[ally] = moves[ally].union(
+                        best_next_move_for_strategy(
+                            strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1
+                        )
+                    )
         else:
             moves[ally].add(((ally[0], ally[1], allies[ally]),))
     return get_children_from_moves(humans, allies, enemies, moves, is_enemies)
