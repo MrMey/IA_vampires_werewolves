@@ -14,7 +14,8 @@ logging.basicConfig(level = logging.DEBUG)
 from connector import Connector
 from grid.grid import Grid
 from decision import Actor
-from algorithm.csp import csp
+# from algorithm.csp import csp
+from algorithm.csp_pulp import csp
 
 
 EMULATE_SERVER = True
@@ -42,7 +43,7 @@ def execute(name, algorithm=1, ip = "18.194.87.146", port = 5555):
     # recoit HME -- utile pour identifier son espèce
     hme = conn.receive()
 
-    #
+    # ICI LES BOURRINS
     Map = conn.receive()
     grid.initiate_all_groups(Map[1],hme[1])
     csp(grid)

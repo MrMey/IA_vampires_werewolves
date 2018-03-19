@@ -38,7 +38,9 @@ def csp(grid):
         model.addCons(quicksum(M[(k,j)] for j in range(n)) <= 1)
 
     alpha, beta = 0.5, 0.5
-    obj_1 = quicksum(quicksum(M[(i,j)] for i in range(m))-h[j] for j in range(n))
+    # On optimise le nombre d'alliés par rapport au nombre d'humains
+    obj_1 = quicksum(quicksum(M[(i,j)] for i in range(m))-h[j][0] for j in range(n))
+    # On minimise la distance totale parcourue par les alliés
     obj_2 = quicksum(M[(i,j)]*D[(i,j)] for i in range(m) for j in range(n))
     model.setObjective(alpha*obj_1+beta*obj_2, 'minimize')
 
