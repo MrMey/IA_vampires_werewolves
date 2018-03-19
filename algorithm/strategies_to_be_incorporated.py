@@ -28,16 +28,6 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
     # best move depending of the strategy
     moves = []
     if strategy == "convert":
-        # TODO enlever cette partie ?
-        # # si il y a des humains juste à côté, on les convertit en priorité, si ça ne nous occasionne pas de perte
-        # best = get_convertible_humans_in_imediate_context(just_around, humans, allies, group)
-        # if len(best) > 0:
-        #     # on ne prend pas en compte les locked cells ici : si c'est une case d'humains, il n'y a pas d'allies ici,
-        #     #  l'alpha-beta regarde si il y des enemis trop forts autours
-        #     print("in imediate context, let's convert some humans!!!!!")
-        #     return best
-
-        # si il n'y a pas d'humains convertissables autour, on cherche une maison plus loin
         target = find_closest(group, humans, 1, nbr_cibles, allies)
         locked = locked_extend("convert", locked_cells, humans, enemies, allies[group])
         # on suppose qu'un groupe allié sur le chemin ne pose pas de problème:
@@ -59,7 +49,7 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                     moves.append(((i1, j1, allies[group]),))
                 if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves:
                     moves.append(((i2, j2, allies[group]),))
-            elif (i_new, j_new) not in moves:
+            elif (i_new, j_new) not in moves and ((i_new, j_new) not in locked):
                 moves.append(((i_new, j_new, allies[group]),))
     elif strategy == "attack":
         # on attaque aussi les groupes pas 1,5 fois plus faibles que nous
@@ -77,7 +67,7 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                     moves.append(((i1, j1, allies[group]),))
                 if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves:
                     moves.append(((i2, j2, allies[group]),))
-            elif (i_new, j_new) not in moves:
+            elif (i_new, j_new) not in moves and (i_new, j_new) not in locked:
                 moves.append(((i_new, j_new, allies[group]),))
     elif strategy == "flee":
         # TODO : ajouter des merges pour devenir plus gros et donc ne plus être en danger
@@ -92,12 +82,12 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
         targets = find_targets_split(group, humans, allies, enemies)
         moves_for_group = []
         nb = allies[group]
-        for i in range(len(targets[0])):
-            if i == len(targets[0])-1 and len(targets[1])==0:
+        for k in range(len(targets[0])):
+            if k == len(targets[0])-1 and len(targets[1])==0:
                 to_move = nb
             else:
-                to_move = humans[targets[0][i]]+1
-            i_new, j_new = find_direction_for_target(group, targets[0][i])
+                to_move = humans[targets[0][k]]+1
+            i_new, j_new = find_direction_for_target(group, targets[0][k])
             if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
                 if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves_for_group:
@@ -106,15 +96,15 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                 elif (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves_for_group:
                     moves_for_group.append((i2, j2, to_move))
                     nb -= to_move
-            elif (i_new, j_new) not in moves_for_group:
+            elif (i_new, j_new) not in moves_for_group and (i_new, j_new) not in locked:
                 moves_for_group.append((i_new, j_new, to_move))
                 nb -= to_move
-        for i in range(len(targets[1])):
-            if i == len(targets[1])-1:
+        for p in range(len(targets[1])):
+            if p == len(targets[1])-1:
                 to_move = nb
             else:
-                to_move = math.ceil(enemies[targets[1][i]])
-            i_new, j_new = find_direction_for_target(group, targets[1][i])
+                to_move = math.ceil(enemies[targets[1][p]])
+            i_new, j_new = find_direction_for_target(group, targets[1][p])
             if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
                 if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves_for_group:
@@ -123,12 +113,13 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                 elif (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves_for_group:
                     moves_for_group.append((i2, j2, to_move))
                     nb -= to_move
-            elif (i_new, j_new) not in moves_for_group:
+            elif (i_new, j_new) not in moves_for_group and (i_new, j_new) not in locked:
                 moves_for_group.append((i_new, j_new, to_move))
                 nb -= to_move
         moves.append(tuple(moves_for_group))
     elif strategy == "final_rounds":
         # if only two groups remain and ours is weaker
+        locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
         for e,n in enemies.items():
             if n > 1.5 * allies[group]:
                 # to avoid but we already lost... :(
@@ -139,22 +130,13 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                     for j_new in range(j-1, j+2):
                         if (i_new != i or j_new != j) and not hors_carte(i_new, j_new, x_max, y_max):
                             if (i_new, j_new) != (i1, j1) and (i_new, j_new) != (i2, j2) and (i_new, j_new) != (x, y):
-                                moves.append(((i_new, j_new, allies[group]),))
+                                if (i_new, j_new) not in locked:
+                                    moves.append(((i_new, j_new, allies[group]),))
             else:
                 x, y = find_direction_for_target(group, e)
                 #logging.debug("LAST ROUND BIS: {} {}".format(group, (x,y)))
-                moves.append(((x, y, allies[group]),))
-                """if x-i == e[0]-x and y-j == e[1]-y:
-                    for i_new in range(i - 1, i + 2):
-                        for j_new in range(j - 1, j + 2):
-                            if i_new != j_new and not hors_carte(i_new, j_new, x_max, y_max):
-                                if (i_new, j_new) != (x, y):
-                                    moves.append((i_new, j_new, allies[group]),)
-                else:
-                    logging.debug("LAST ROUND: {} {}".format(group, e))
-                    moves.append((e[0], e[1], allies[group]),)"""
-
-
+                if (x,y) not in locked:
+                    moves.append(((x, y, allies[group]),))
     else:
         raise Exception("unknown strategy, please implement it")
     return moves
@@ -231,14 +213,14 @@ def find_targets_split(group, humans, allies, enemies):
     nb = allies[group]
     human_targets, enemies_targets = [], []
     for human in humans:
-        if nb < 1:
+        if nb <= 1:  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             break
         if humans[human] < nb:
             human_targets.append(human)
             nb -= humans[human] + 1
     if nb > 1:
         for enemy in enemies:
-            if nb < 1:
+            if nb <= 1: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 break
             if nb > 1.5*enemies[enemy]+1:
                 enemies_targets.append(enemy)
@@ -327,12 +309,12 @@ def hors_carte(i, j, x, y):
 
 
 
-"""humans = {(1, 1): 6, (2, 5): 2, (5, 2): 1}
-allies = {(2, 3): 3, (5, 5): 3, (2, 1): 1}
+humans = {(1, 1): 6, (2, 5): 2, (5, 2): 1}
+allies = {(2, 3): 12, (5, 5): 3, (2, 1): 1}
 enemies = {(3, 2): 1, (2, 4): 12}
 group = (2, 3)
 locked_cells = []
-x_max = 6
-y_max = 6
-a = best_next_move_for_strategy("flee", group, humans, allies, enemies, locked_cells, x_max, y_max, nbr_cibles=3)
-print(a)"""
+x_max = 20
+y_max = 20
+a = best_next_move_for_strategy("split", group, humans, allies, enemies, locked_cells, x_max, y_max, nbr_cibles=3)
+print(a)
