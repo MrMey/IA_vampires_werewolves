@@ -1,11 +1,11 @@
 import itertools
 import time
-import logging
+# import logging
 
 from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
 STRATEGIES = ["convert", "attack", "flee", "final_rounds", "split"]
-DEPTH = 3
+DEPTH = 2
 
 cache = {}
 
@@ -153,14 +153,14 @@ def alpha_beta_min(depth, humans, allies, enemies, interval, dimensions):
 
 
 def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
-    moves = {ally: [] for ally in allies}
+    moves = {ally: set() for ally in allies}
     min_en = min(enemies.values())
     for ally in moves:
         if not is_enemies or allies[ally] >= min_en:
             for strategy in STRATEGIES:
-                moves[ally].extend(best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1))
+                moves[ally] = moves[ally].union(best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1))
         else:
-            moves[ally].append(((ally[0], ally[1], allies[ally]),))
+            moves[ally].add(((ally[0], ally[1], allies[ally]),))
     return get_children_from_moves(humans, allies, enemies, moves, is_enemies)
 
 
@@ -259,7 +259,12 @@ def get_child_from_move(new_humans, new_allies, new_enemies, origin, list_of_mov
 
 
 def is_actual_move(moves_set, corr):
+    # print(moves_set, corr)
+    if len(corr) != len(moves_set):
+        return False
     for i in range(len(corr)):
+        if len(moves_set[i]) == 0 or len(moves_set[i][0]) == 0:
+            return False
         if len(moves_set[i]) > 1 or corr[i] != (moves_set[i][0][0], moves_set[i][0][1]):
             return True
     return False
