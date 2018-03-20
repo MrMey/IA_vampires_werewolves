@@ -42,9 +42,12 @@ class Actor:
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
+            logging.debug(f"dest: {dest}")
             for ally in dest:
                 for destination in dest[ally]:
                     move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                    if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
+                        logging.debug("ERROR!!!")
                     logging.debug("move {}".format(move))
                     self.queue.append(move)
             logging.debug("decision duration: {}".format(time() - top))

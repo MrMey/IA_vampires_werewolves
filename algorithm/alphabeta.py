@@ -2,12 +2,12 @@
 
 import itertools
 import time
-# import logging
+import logging
 from threading import Lock
 
 from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
-STRATEGIES = ["convert", "attack", "flee", "split"]
+STRATEGIES = ["convert", "flee", "split", "random"]
 DEPTH = 7
 
 cache = {}
@@ -57,14 +57,14 @@ def heuristic(humans, allies, enemies, probabilistic):
         if dmin is not None:
             if allies[ally] > 1.5 * enemies[enemy]:
                 result += enemies[enemy] / (max(1, dmin))
-                # print(result)
+                print(result)
             elif 1.5 * allies[ally] < enemies[enemy]:
                 result -= allies[ally] / (max(1, dmin))
                 # print(result)
             else:
                 p = allies[ally] / (2 * enemies[enemy])
-                result += ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin)))
-                # print(result)
+                result += min(0, ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin))))
+                print(result)
     return result
 
 
@@ -85,16 +85,17 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
         hash_code = cache_hash(humans, allies, enemies, depth, True)
         with lock:
             if hash_code in cache:
-                #logging.debug("CACHE HIT")
+                # logging.debug("CACHE HIT")
                 if get_moves:
-                    covered_branches = 1
+                    covered_branches += 1
                     return cache[hash_code][1]
                 else:
                     return cache[hash_code][0]
-        #logging.debug("CACHE MISS")
+        # logging.debug("CACHE MISS")
         inter = interval
         children = get_relevant_children(humans, allies, enemies, dimensions, False)
         if len(children) == 0:
+            logging.debug("NO CHILDREN!!!")
             return h
         i = 0
         move = None
@@ -116,7 +117,7 @@ def alpha_beta_max(depth, humans, allies, enemies, interval, dimensions, get_mov
         with lock:
             cache[hash_code] = (inter[0], move)
         if get_moves:
-            # print("FINAL MOVE: {}\n".format(move))
+            print("FINAL MOVE: {}\n".format(move))
             return move
         return inter[0]
 
@@ -165,22 +166,11 @@ def get_relevant_children(humans, allies, enemies, dimensions, is_enemies):
     min_en = min(enemies.values())
     for ally in moves:
         if not is_enemies or allies[ally] >= min_en:
-            if humans != {}:
-                for strategy in STRATEGIES:
-                    moves[ally] = moves[ally].union(
-                        best_next_move_for_strategy(
-                            strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1
-                        )
-                    )
-            else:
-                for strategy in ['attack', 'flee', 'final_rounds']:
-                    moves[ally] = moves[ally].union(
-                        best_next_move_for_strategy(
-                            strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1
-                        )
-                    )
-        else:
+            for strategy in STRATEGIES:
+                moves[ally] = moves[ally].union(best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0]-1, dimensions[1]-1))
+        if len(moves[ally]) == 0:
             moves[ally].add(((ally[0], ally[1], allies[ally]),))
+    # logging.debug(f"moves: {moves}")
     return get_children_from_moves(humans, allies, enemies, moves, is_enemies)
 
 
@@ -295,13 +285,15 @@ def get_relevant_children_enemies(humans, allies, enemies, dimensions):
 def get_dest_alpha_beta(grid):
     # logging.debug("cache length: {}".format(len(cache)))
     global DEPTH
-    DEPTH = max(2, 8 - 2*(len(grid.allies)+len(grid.enemies)))
+    DEPTH = max(1, 8 - 2*(len(grid.allies)+len(grid.enemies)))
+    print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
+    print(f"DEPTH: {DEPTH}")
     global STRATEGIES
     if len(grid.allies) >= 3:
         if "split" in STRATEGIES:
             STRATEGIES.remove("split")
     if len(grid.humans) == 0:
-        STRATEGIES = ["final_rounds"]
+        STRATEGIES = ["final_rounds", "random"]
     return get_next_move_alpha_beta(DEPTH, grid)
 
 
