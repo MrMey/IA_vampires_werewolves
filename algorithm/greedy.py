@@ -87,5 +87,4 @@ def get_dest(grid, ally):
         logging.debug('target {} enemy units at {}'.format(grid.get_group_at(target[0],target[1]),target))
         dest = get_closest_point(grid, ally, target)
     logging.debug('destination {}'.format(dest))
-    grid.add_locked_cell(dest)
     return [(ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])]

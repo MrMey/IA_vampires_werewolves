@@ -21,11 +21,7 @@ def get_closest_point(grid, srce, dest, avoid_enemies = True, avoid_stronger_hum
         next_pos = moves[idx]
         logging.debug('next_post {} vs ally {}'.format(next_pos, grid.allies[srce]))
 
-        if grid.is_locked_cell(next_pos):
-            # will be removed
-            logging.debug('destination in locked cell')
-            iter_pos = True
-        elif avoid_enemies and next_pos in grid.get_enemy_range():
+        if avoid_enemies and next_pos in grid.get_enemy_range():
             logging.debug('destination in enemy range')
             iter_pos = True
         elif avoid_stronger_humans and next_pos in grid.humans:
@@ -111,7 +107,6 @@ def get_dest(grid, ally):
         if target:
             logging.debug("target : {}".format(target))
             dest = get_closest_point(grid,ally,target, avoid_enemies = False)
-            grid.add_locked_cell(dest)
             if grid.allies[ally] > 1:
                 move += [(ally[0], ally[1], grid.get_group_at(ally[0],ally[1])-1, dest[0], dest[1])]
             else:
@@ -123,7 +118,6 @@ def get_dest(grid, ally):
         logging.debug("humans : {}".format(grid.humans))
         logging.debug("target : {}".format(target))
         dest = get_closest_point(grid, ally, target)
-        grid.add_locked_cell(dest)
         extra = min(max(grid.allies[ally] - grid.get_group_at(target[0],target[1]) - 1, 0),1)
         logging.debug("extra units : {}".format(extra))
         move += [(ally[0], ally[1], grid.get_group_at(ally[0],ally[1]) - extra, dest[0], dest[1])]
@@ -131,7 +125,6 @@ def get_dest(grid, ally):
     else:
         target = choose_enemies(grid, ally)
         dest = get_closest_point(grid, ally, target)
-        grid.add_locked_cell(dest)
         move += [(ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])]
 
     logging.debug('move {}'.format(move))

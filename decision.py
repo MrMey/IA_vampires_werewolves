@@ -7,6 +7,7 @@ Created on Fri Feb  2 11:29:05 2018
 import struct
 import logging
 from time import time
+import threading
 logging.basicConfig(level = logging.DEBUG)
 
 
@@ -15,13 +16,21 @@ from algorithm import splittercell
 from algorithm import alphabeta
 from algorithm import multisplit
 
-class Actor:
+class Actor(threading.Thread):
     def __init__(self, algorithm = 1):
+        threading.Thread.__init__(self)
+        self._stop_event = threading.Event()
         self.queue = []
         self.algorithm = algorithm
         self.target = []
 
-    def action(self,grid):
+    def stop(self):
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
+        
+    def run(self,grid):
         if self.algorithm in [1, 3, 4]:
             for ally in grid.allies:
                 logging.debug("humans: {}".format(grid.humans))

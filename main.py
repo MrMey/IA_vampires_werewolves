@@ -8,8 +8,9 @@ import os
 import time
 import struct
 import sys
+import threading
 import logging
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(filename = 'log.txt',level = logging.DEBUG)
 
 from connector import Connector
 from grid.grid import Grid
@@ -17,6 +18,7 @@ from decision import Actor
 
 
 EMULATE_SERVER = True
+TIME_OUT = 1
 
 def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
     """
@@ -67,10 +69,14 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
             break
 
         # prend la decision
-        actor.action(grid)
+        actor.run(grid)
+
+        while time.time()-start_time < TIME_OUT:
+            time.sleep(0.01)
 
         # envoie file d'actions au serveur
         conn.send(actor.send_moves())
+        actor.stop()
         # vide la file d'action pour prochain tour
         actor.clean_moves()
 
