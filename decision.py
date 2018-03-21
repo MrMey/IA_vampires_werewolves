@@ -40,20 +40,21 @@ class Actor:
             top = time()
             thread = alphabeta.AlphabetaThread(grid)
             thread.start()
-            thread.join()
+            thread.join(1.7)
             dest = thread.global_move
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
             logging.debug("dest: {}".format(dest))
-            for ally in dest:
-                for destination in dest[ally]:
-                    move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
-                    if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
-                        logging.debug("ERROR!!!")
-                    logging.debug("move {}".format(move))
-                    if not (ally[0] == destination[0] and ally[1] == destination[1]):
-                        self.queue.append(move)
+            if dest is not None:
+                for ally in dest:
+                    for destination in dest[ally]:
+                        move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                        if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
+                            logging.debug("ERROR!!!")
+                        logging.debug("move {}".format(move))
+                        if not (ally[0] == destination[0] and ally[1] == destination[1]):
+                            self.queue.append(move)
             logging.debug("decision duration: {}".format(time() - top))
 
 

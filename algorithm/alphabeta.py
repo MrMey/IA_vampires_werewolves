@@ -177,7 +177,7 @@ class AlphabetaThread(Thread):
             if len(moves[ally]) == 0:
                 moves[ally].add(((ally[0], ally[1], allies[ally]),))
         # logging.debug(f"moves: {moves}")
-        return AlphabetaThread.get_children_from_moves(humans, allies, enemies, moves, is_enemies)
+        return AlphabetaThread.get_children_from_moves(humans, allies, enemies, moves)
 
     @staticmethod
     def get_all_children_no_split(humans, allies, enemies, dimensions, is_enemies):
@@ -195,10 +195,10 @@ class AlphabetaThread(Thread):
             else:
                 moves = {}
         # logging.debug("moves after update {}".format(moves))
-        return AlphabetaThread.get_children_from_moves(humans, allies, enemies, moves, is_enemies)
+        return AlphabetaThread.get_children_from_moves(humans, allies, enemies, moves)
 
     @staticmethod
-    def get_children_from_moves(humans, allies, enemies, moves, is_enemies):
+    def get_children_from_moves(humans, allies, enemies, moves):
         # print(moves)
         children = []
         i = 0
