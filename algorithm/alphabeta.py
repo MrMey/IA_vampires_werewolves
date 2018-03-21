@@ -65,6 +65,9 @@ def heuristic(humans, allies, enemies, probabilistic):
                 p = allies[ally] / (2 * enemies[enemy])
                 if len(humans)==0:
                     result += min(0, ((p**2) * allies[ally] / (max(1, dmin))) - (((1 - p)**2) * enemies[enemy] / (max(1, dmin))))
+                else :
+                    result += (1 / len(humans))*min(0, ((p ** 2) * allies[ally] / (max(1, dmin))) - (((1 - p) ** 2) * enemies[enemy] / (max(1, dmin))))
+
                 # print(result)
     return result
 
