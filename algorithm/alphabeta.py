@@ -24,19 +24,18 @@ def heuristic(humans, allies, enemies, probabilistic):
         return -2*(sum(enemies.values()) + sum(humans.values()))
     if len(enemies) == 0:
         return 2 * (sum(allies.values()) + sum(humans.values()))
-    toph = time.time()
     result = 2*(sum(allies.values()) - sum(enemies.values()))
     # print(result)
     for human in humans:
         min_dist_al = None
         for ally in allies:
             d = max(abs(ally[0] - human[0]), abs(ally[1] - human[1]))
-            if (min_dist_al is None or d < min_dist_al) and allies[ally] > humans[human]:
+            if (min_dist_al is None or d < min_dist_al) and allies[ally] >= humans[human]:
                 min_dist_al = d
         min_dist_en = None
         for enemy in enemies:
             d = max(abs(enemy[0] - human[0]), abs(enemy[1] - human[1]))
-            if min_dist_en is None or d < min_dist_en and enemies[enemy] > humans[human]:
+            if min_dist_en is None or d < min_dist_en and enemies[enemy] >= humans[human]:
                 min_dist_en = d
         if (min_dist_en is None and min_dist_al is not None) or (min_dist_en is not None and min_dist_al is not None
                                                                      and min_dist_al < min_dist_en):
@@ -55,7 +54,7 @@ def heuristic(humans, allies, enemies, probabilistic):
                 enemy = en
         if dmin is not None:
             if allies[ally] > 1.5 * enemies[enemy]:
-                result += enemies[enemy] / (max(1, dmin))
+                result += 0  # enemies[enemy] / (max(1, dmin))
                 # print(result)
             elif 1.5 * allies[ally] < enemies[enemy]:
                 result -= allies[ally] / (max(1, dmin))
@@ -238,7 +237,7 @@ class AlphabetaThread(Thread):
                 new_allies[origin] -= number
             if destination in new_humans:
                 t = new_humans[destination]
-                if number > new_humans[destination]:
+                if number >= new_humans[destination]:
                     del new_humans[destination]
                     new_allies[destination] = number + t
                 else:
@@ -291,7 +290,7 @@ class AlphabetaThread(Thread):
     def get_dest_alpha_beta(self):
         # logging.debug("cache length: {}".format(len(cache)))
         global DEPTH
-        DEPTH = max(1, 8 - 2*(len(self.grid.allies)+len(self.grid.enemies)))
+        DEPTH = max(1, int(8 - 1.5*(len(self.grid.allies)+len(self.grid.enemies))))
         # print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
         # print(f"DEPTH: {DEPTH}")
         global STRATEGIES

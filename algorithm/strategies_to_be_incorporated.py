@@ -52,7 +52,7 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                     moves.append(((i1, j1, allies[group], strategy),))
                 if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves:
                     moves.append(((i2, j2, allies[group], strategy),))
-            elif (i_new, j_new) not in moves and ((i_new, j_new) not in locked):
+            elif ((i_new, j_new, allies[group], strategy),) not in moves and ((i_new, j_new) not in locked):
                 moves.append(((i_new, j_new, allies[group], strategy),))
     elif strategy == "attack":
         # on attaque aussi les groupes pas 1,5 fois plus faibles que nous
@@ -234,7 +234,7 @@ def find_closest(group, category, rate, max_return, allies):
     best_choice = []
     for loc, nb in category.items():
         distance = max(loc[0] - group[0], loc[1] - group[1])
-        if rate * nb < allies[group]:  # bataille que l'on peut gagner
+        if rate * nb <= allies[group]:  # bataille que l'on peut gagner
             best_choice.append(loc)
             if len(best_choice) > max_return:
                 m = len(best_choice)
@@ -253,7 +253,7 @@ def find_targets_split(group, humans, allies, enemies):
     for human in humans:
         if nb <= 1:  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             break
-        if humans[human] < nb:
+        if humans[human] <= nb:
             human_targets.append(human)
             nb -= humans[human] + 1
     if nb > 1:
@@ -293,7 +293,7 @@ def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
     locked_list = locked_cells
     if strategy == "convert":
         for human, nbr in humans.items():
-            if nbr >= group_nbr:
+            if nbr > group_nbr:
                 locked_list.append(human)
         for enemie, nbr in enemies.items():
             if nbr > group_nbr * 1.5 :
@@ -310,7 +310,7 @@ def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
                 locked_list += [enemie]
     elif strategy == "attack":
         for human, nbr in humans.items():
-            if nbr >= group_nbr:
+            if nbr > group_nbr:
                 locked_list.append(human)
         for enemie, nbr in enemies.items():
             if nbr > group_nbr * 1.5 :
@@ -325,7 +325,7 @@ def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
                                 (enemie[0], enemie[1]+1)]
     elif strategy == "flee":
         for human, nbr in humans.items():
-            if nbr >= group_nbr:
+            if nbr > group_nbr:
                 locked_list.append(human)
         for enemie, nbr in enemies.items():
             if nbr * 1.5 >= group_nbr :
