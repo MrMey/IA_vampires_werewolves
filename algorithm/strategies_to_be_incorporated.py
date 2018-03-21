@@ -121,6 +121,15 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                 nb -= to_move
         moves.append(tuple(moves_for_group))
     elif strategy == "final_rounds":
+        # if several groups, lets merge
+        if len(allies)>1:
+            first=0
+            for a in allies:
+                if first!=0:
+                    x, y = find_direction_for_target(a, first)
+                    moves.append(((x, y, allies[group], strategy),))
+                else:
+                    first = a
         # if only two groups remain and ours is weaker
         locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
         for e,n in enemies.items():
