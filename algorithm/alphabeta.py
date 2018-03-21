@@ -57,7 +57,7 @@ def heuristic(humans, allies, enemies, probabilistic):
         if dmin is not None:
             if allies[ally] > 1.5 * enemies[enemy]:
                 result += enemies[enemy] / (max(1, dmin))
-                print(result)
+                # print(result)
             elif 1.5 * allies[ally] < enemies[enemy]:
                 result -= allies[ally] / (max(1, dmin))
                 # print(result)
