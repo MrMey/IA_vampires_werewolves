@@ -38,7 +38,10 @@ class Actor:
                 self.queue += move
         elif self.algorithm == 2:
             top = time()
-            dest = alphabeta.get_dest_alpha_beta(grid)
+            thread = alphabeta.AlphabetaThread(grid)
+            thread.start()
+            thread.join()
+            dest = thread.global_move
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
