@@ -49,7 +49,8 @@ class Actor:
                     if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
                         logging.debug("ERROR!!!")
                     logging.debug("move {}".format(move))
-                    self.queue.append(move)
+                    if not (ally[0] == destination[0] and ally[1] == destination[1]):
+                        self.queue.append(move)
             logging.debug("decision duration: {}".format(time() - top))
 
 
