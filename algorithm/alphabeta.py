@@ -296,6 +296,9 @@ def get_dest_alpha_beta(grid):
     if len(grid.allies) >= 3:
         if "split" in STRATEGIES:
             STRATEGIES.remove("split")
+    else:
+        if "split" not in STRATEGIES:
+            STRATEGIES.append("split")
     if len(grid.humans) == 0:
         STRATEGIES = ["final_rounds", "random"]
     return get_next_move_alpha_beta(DEPTH, grid)
