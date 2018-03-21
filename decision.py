@@ -6,6 +6,7 @@ Created on Fri Feb  2 11:29:05 2018
 """
 import struct
 import logging
+from time import time
 logging.basicConfig(level = logging.DEBUG)
 
 
@@ -36,24 +37,28 @@ class Actor:
                 # move must be a list
                 self.queue += move
         elif self.algorithm == 2:
+            top = time()
             dest = alphabeta.get_dest_alpha_beta(grid)
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
+            logging.debug(f"dest: {dest}")
             for ally in dest:
-                move = [ally[0], ally[1], dest[ally][2], dest[ally][0], dest[ally][1]]
-                logging.debug("move {}".format(move))
-                self.queue.append(move)
+                for destination in dest[ally]:
+                    move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                    if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
+                        logging.debug("ERROR!!!")
+                    logging.debug("move {}".format(move))
+                    self.queue.append(move)
+            logging.debug("decision duration: {}".format(time() - top))
 
 
     def send_moves(self):
         paquet = bytes()
         paquet += 'MOV'.encode()
         paquet += struct.pack('B', len(self.queue))
-        logging.debug("queue {}".format(self.queue))
         for move in self.queue:
             for el in move:
-                logging.debug(el)
                 # need to use usigned byte to go up to 255 units
                 paquet += struct.pack('B', el)
         return paquet
