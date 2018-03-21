@@ -42,7 +42,7 @@ class Actor:
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
-            logging.debug(f"dest: {dest}")
+            logging.debug("dest: {}".format(dest))
             for ally in dest:
                 for destination in dest[ally]:
                     move = [ally[0], ally[1], destination[2], destination[0], destination[1]]

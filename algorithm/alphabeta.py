@@ -286,8 +286,8 @@ def get_dest_alpha_beta(grid):
     # logging.debug("cache length: {}".format(len(cache)))
     global DEPTH
     DEPTH = max(1, 8 - 2*(len(grid.allies)+len(grid.enemies)))
-    print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
-    print(f"DEPTH: {DEPTH}")
+    # print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
+    # print(f"DEPTH: {DEPTH}")
     global STRATEGIES
     if len(grid.allies) >= 3:
         if "split" in STRATEGIES:
