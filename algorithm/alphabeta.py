@@ -8,7 +8,7 @@ from threading import Lock, Thread
 from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
 
-STRATEGIES = ["flee", "split", "attack"]
+STRATEGIES = ["flee", "split"]
 DEPTH = 7
 
 cache = {}

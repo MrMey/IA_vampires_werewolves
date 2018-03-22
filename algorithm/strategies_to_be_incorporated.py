@@ -31,14 +31,14 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
     # best move depending of the strategy
     moves = []
     if strategy == "flee":
-        locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
+        locked = locked_extend(locked_cells, humans, enemies, allies[group])
         for i_new in range(i-1, i+2):
             for j_new in range(j-1, j+2):
                 if (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
                     moves.append(((i_new, j_new, allies[group], strategy),))
     # if strategy == "convert":
     #     target = find_closest(group, humans, 1, nbr_cibles, allies)
-    #     locked = locked_extend("convert", locked_cells, humans, enemies, allies[group])
+    #     locked = locked_extend(locked_cells, humans, enemies, allies[group])
     #     # on suppose qu'un groupe allié sur le chemin ne pose pas de problème:
     #     #     soit il fusionne soit il est dans locked_cells
     #     # si l'enemi est faible, on le "mange" au passage
@@ -60,26 +60,26 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
     #                 moves.append(((i2, j2, allies[group], strategy),))
     #         elif ((i_new, j_new, allies[group], strategy),) not in moves and ((i_new, j_new) not in locked) and not hors_carte(i_new, j_new, x_max, y_max):
     #             moves.append(((i_new, j_new, allies[group], strategy),))
-    elif strategy == "attack":
-        # on attaque aussi les groupes pas 1,5 fois plus faibles que nous
-        target = find_closest(group, enemies, 0.33, nbr_cibles, allies)
-        locked = locked_extend("attack", locked_cells, humans, enemies, allies[group])
-        # print(locked)
-        for t in target:
-            # trouve la direction à prendre...
-            i_new, j_new = find_direction_for_target(group, t)
-            #print('     target : ' + str(t) + '  direction : ' + str((i_new, j_new)))
-            # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
-            if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
-                (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and ((i1, j1, allies[group], strategy,)) not in moves:
-                    moves.append(((i1, j1, allies[group], strategy),))
-                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and ((i2, j2, allies[group], strategy,)) not in moves:
-                    moves.append(((i2, j2, allies[group], strategy),))
-            elif ((i_new, j_new, allies[group], strategy,)) not in moves and (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
-                moves.append(((i_new, j_new, allies[group], strategy),))
+    # elif strategy == "attack":
+    #     # on attaque aussi les groupes pas 1,5 fois plus faibles que nous
+    #     target = find_closest(group, enemies, 0.33, nbr_cibles, allies)
+    #     locked = locked_extend(locked_cells, humans, enemies, allies[group])
+    #     # print(locked)
+    #     for t in target:
+    #         # trouve la direction à prendre...
+    #         i_new, j_new = find_direction_for_target(group, t)
+    #         #print('     target : ' + str(t) + '  direction : ' + str((i_new, j_new)))
+    #         # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
+    #         if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
+    #             (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
+    #             if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and ((i1, j1, allies[group], strategy,)) not in moves:
+    #                 moves.append(((i1, j1, allies[group], strategy),))
+    #             if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and ((i2, j2, allies[group], strategy,)) not in moves:
+    #                 moves.append(((i2, j2, allies[group], strategy),))
+    #         elif ((i_new, j_new, allies[group], strategy,)) not in moves and (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
+    #             moves.append(((i_new, j_new, allies[group], strategy),))
     elif strategy == "split":
-        locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
+        locked = locked_extend(locked_cells, humans, enemies, allies[group])
         targets = find_targets_split(group, humans, allies, enemies)
         moves_for_group = []
         nb = allies[group]
@@ -119,7 +119,7 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                 nb -= to_move
         moves.append(tuple(moves_for_group))
     elif strategy == "final_rounds":
-        locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
+        locked = locked_extend(locked_cells, humans, enemies, allies[group])
         # if several groups, lets merge
         if len(allies)>1:
             first=0
@@ -194,37 +194,6 @@ def find_direction_for_target(group, t):
     return i_new, j_new
 
 
-# def get_convertible_humans_in_imediate_context(just_around, humans, allies, group):
-#     """
-#     humains convertissable dans les cases juste autour
-#     """
-#     best = []
-#     for h in range(len(just_around["humans"])):
-#         if humans[just_around["humans"][h]] < allies[group]:
-#             best.append((just_around["humans"][h], humans[just_around["humans"][h]]))
-#     return best
-
-
-# def get_imediate_context(group, humans, enemies, allies):
-#     """
-#     Donne la position du groupe et pour les cases autour, divisé entre les humains, les alliés et les enemis
-#     """
-#     just_around = {"humans": [], "enemies": [], "allies": []}
-#     i = group[0]
-#     j = group[1]
-#     for h in humans:
-#         if (h[0] == i - 1 or h[0] == i or h[0] == i + 1) and (h[1] == j - 1 or h[1] == j or h[1] == j + 1):
-#             just_around["humans"].append(h)
-#     for e in enemies:
-#         if (e[0] == i - 1 or e[0] == i or e[0] == i + 1) and (e[1] == j - 1 or e[1] == j or e[1] == j + 1):
-#             just_around["enemies"].append(e)
-#     for a in allies:
-#         if (a[0] == i - 1 or a[0] == i or a[0] == i + 1) and (a[1] == j - 1 or a[1] == j or a[1] == j + 1):
-#             if a != group:
-#                 just_around["allies"].append(a)
-#     return just_around, i, j
-
-
 def find_closest(group, category, rate, max_return, allies):
     """
     renvoie la liste des max_return plus proches cases correspondant à des groupes de catégory, en
@@ -278,7 +247,7 @@ def try_avoiding(i, j, i_new, j_new):
     return i, j_new, i_new, j
 
 
-def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
+def locked_extend(locked_cells, humans, enemies, group_nbr):
     """
     Renvoie les cases à éviter absolument
     :param strategy:
@@ -286,9 +255,7 @@ def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
     :param humans:
     :param enemies:
     :param group_nbr: nombre d'éléments dans le groupe considéré
-    :return: l'ensemble des cases à éviter : les cases de départ des autres alliés,
-                les cases d'humains trop nombreux convertis, les cases des enemis trop forts pour être attaqués
-                (pas pour la strategie attack) et les cases autour s'il est même assez puissant pour nous attaquer
+    :return: l'ensemble des cases à éviter
     """
     locked_list = locked_cells
     for human, nbr in humans.items():
@@ -300,14 +267,11 @@ def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
             for x in range(enemie[0] - 1, enemie[0] + 2):
                 for y in range(enemie[1] - 1, enemie[1] + 2):
                     try:
-                        potentiel = human[(x,y)]
-                        if (group_nbr + potentiel) * 1.5 < nbr:
+                        potentiel = humans[(x,y)]
+                        if (group_nbr + potentiel) < nbr * 1.5 :
                             locked_list.append((x, y))
                     except:
                         locked_list.append((x, y))
-        elif nbr * 1.5 >= group_nbr:
-            if strategy != "attack":
-                locked_list += [enemie]
     return locked_list
 
 
