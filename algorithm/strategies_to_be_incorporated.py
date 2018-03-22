@@ -48,11 +48,11 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
             # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
             if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and ((i1, j1, allies[group], strategy),) not in moves:
+                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves:
                     moves.append(((i1, j1, allies[group], strategy),))
-                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and ((i2, j2, allies[group], strategy),) not in moves:
+                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves:
                     moves.append(((i2, j2, allies[group], strategy),))
-            elif ((i_new, j_new, allies[group], strategy),) not in moves and ((i_new, j_new) not in locked) and not hors_carte(i_new, j_new, x_max, y_max):
+            elif ((i_new, j_new, allies[group], strategy),) not in moves and ((i_new, j_new) not in locked):
                 moves.append(((i_new, j_new, allies[group], strategy),))
     elif strategy == "attack":
         # on attaque aussi les groupes pas 1,5 fois plus faibles que nous
@@ -66,11 +66,11 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
             # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
             if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and ((i1, j1, allies[group], strategy,)) not in moves:
+                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves:
                     moves.append(((i1, j1, allies[group], strategy),))
-                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and ((i2, j2, allies[group], strategy,)) not in moves:
+                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves:
                     moves.append(((i2, j2, allies[group], strategy),))
-            elif ((i_new, j_new, allies[group], strategy,)) not in moves and (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
+            elif (i_new, j_new) not in moves and (i_new, j_new) not in locked:
                 moves.append(((i_new, j_new, allies[group], strategy),))
     elif strategy == "flee":
         locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
@@ -91,13 +91,13 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
             i_new, j_new = find_direction_for_target(group, targets[0][k])
             if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1, to_move, strategy) not in moves_for_group:
+                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves_for_group:
                     moves_for_group.append((i1, j1, to_move, strategy))
                     nb -= to_move
-                elif (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2, to_move, strategy) not in moves_for_group:
+                elif (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves_for_group:
                     moves_for_group.append((i2, j2, to_move, strategy))
                     nb -= to_move
-            elif (i_new, j_new, to_move, strategy) not in moves_for_group and (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
+            elif (i_new, j_new) not in moves_for_group and (i_new, j_new) not in locked:
                 moves_for_group.append((i_new, j_new, to_move, strategy))
                 nb -= to_move
         for p in range(len(targets[1])):
@@ -108,13 +108,13 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
             i_new, j_new = find_direction_for_target(group, targets[1][p])
             if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
                 (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1, to_move, strategy) not in moves_for_group:
+                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and (i1, j1) not in moves_for_group:
                     moves_for_group.append((i1, j1, to_move, strategy))
                     nb -= to_move
-                elif (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2, to_move, strategy) not in moves_for_group:
+                elif (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and (i2, j2) not in moves_for_group:
                     moves_for_group.append((i2, j2, to_move, strategy))
                     nb -= to_move
-            elif (i_new, j_new) not in moves_for_group and (i_new, j_new, to_move, strategy) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
+            elif (i_new, j_new) not in moves_for_group and (i_new, j_new) not in locked:
                 moves_for_group.append((i_new, j_new, to_move, strategy))
                 nb -= to_move
         moves.append(tuple(moves_for_group))
@@ -130,13 +130,13 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
             x, y = find_direction_for_target(group, first)
             (i1, j1, i2, j2) = try_avoiding(i, j, x, y)
             # logging.debug("LAST ROUND BIS: {} {}".format(group, (x,y)))
-            if (x, y) not in locked and not hors_carte(x,y, x_max, y_max):
+            if (x, y) not in locked and hors_carte(x,y, x_max, y_max):
                 # logging.debug("LAST ROUND")
                 moves.append(((x, y, allies[group], strategy),))
-            if (i1, j1) not in locked and not hors_carte(i1,j1, x_max, y_max):
+            if (i1, j1) not in locked and hors_carte(i1,j1, x_max, y_max):
                 # logging.debug("LAST ROUND")
                 moves.append(((i1, j1, allies[group], strategy),))
-            if (i2, j2) not in locked and not hors_carte(i2,j2, x_max, y_max):
+            if (i2, j2) not in locked and hors_carte(i2,j2, x_max, y_max):
                 # logging.debug("LAST ROUND")
                 moves.append(((i2, j2, allies[group], strategy),))
 
@@ -157,7 +157,7 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
             else:
                 x, y = find_direction_for_target(group, e)
                 #logging.debug("LAST ROUND BIS: {} {}".format(group, (x,y)))
-                if (x,y) not in locked and not hors_carte(x, y, x_max, y_max):
+                if (x,y) not in locked:
                     # logging.debug("LAST ROUND")
                     moves.append(((x, y, allies[group], strategy),))
     elif strategy == "random":
