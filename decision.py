@@ -22,15 +22,18 @@ class Actor:
         self.queue = []
         self.algorithm = algorithm
         self.target = []
+        self.thread = None
         
     def action(self,grid,turn):
         top = time()
         algorithm = self.algorithm
-        if self.algorithm == 4:
+        if self.algorithm == 5:
             if len(grid.humans) <= 1:
                 algorithm = 2
             elif turn < 3:
                 algorithm = 2
+            else:
+                algorithm = 4
         
         logging.info("choosing algorithm : {}".format(algorithm))
         if algorithm == 4:
@@ -52,29 +55,41 @@ class Actor:
         elif algorithm == 2:
 
             self.thread = alphabeta.AlphabetaThread(grid)
+            go_on = True
             self.thread.start()
-            sleep(TIME_OUT)
-            if len(self.thread.global_move) > 0:
-                dest = dict(self.thread.global_move)
+            sleep(TIME_OUT/3)
+            with self.thread.lock:
+                if self.thread.covered_branches == 0:
+                    go_on = False
+            if go_on:
+                sleep(2*TIME_OUT / 3)
+                with self.thread.lock:
+                    if len(self.thread.global_move) > 0:
+                        dest = dict(self.thread.global_move)
+                    else:
+                        dest = None
+                logging.debug("humans: {}".format(grid.humans))
+                logging.debug("allies: {}".format(grid.allies))
+                logging.debug("enemies: {}".format(grid.enemies))
+                logging.debug("dest: {}".format(dest))
+
+                if dest is not None:
+                    for ally in dest:
+                        for destination in dest[ally]:
+                            move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                            if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
+                                logging.debug("ERROR!!!")
+                            logging.debug("move {}".format(move))
+                            if not (ally[0] == destination[0] and ally[1] == destination[1]):
+                                self.queue.append(move)
             else:
-                dest = None
-
-
-            logging.debug("humans: {}".format(grid.humans))
-            logging.debug("allies: {}".format(grid.allies))
-            logging.debug("enemies: {}".format(grid.enemies))
-            logging.debug("dest: {}".format(dest))
-
-            if dest is not None:
-                for ally in dest:
-                    for destination in dest[ally]:
-                        move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
-                        if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
-                            logging.debug("ERROR!!!")
-                        logging.debug("move {}".format(move))
-                        if not (ally[0] == destination[0] and ally[1] == destination[1]):
-                            self.queue.append(move)
-            logging.debug("decision duration: {}".format(time() - top))
+                logging.debug("switching to multisplit")
+                del self.thread
+                self.thread = None
+                temp = self.algorithm
+                self.algorithm = 4
+                self.action(grid, turn)
+                self.algorithm = temp
         logging.debug('turn moves :\n {}'.format(self.queue))
 
 
@@ -91,3 +106,4 @@ class Actor:
     def clean_moves(self):
         self.queue = []
         del self.thread
+        self.thread = None
