@@ -42,6 +42,7 @@ class Actor:
             thread.start()
             thread.join(1.7)
             self.queue = thread.queue
+            del thread
 
         if algorithm == 3:
             top = time()
@@ -49,13 +50,16 @@ class Actor:
             thread.start()
             thread.join(1.7)
             self.queue = thread.queue
+            del thread
 
         elif algorithm == 2:
             top = time()
             thread = alphabeta.AlphabetaThread(grid)
             thread.start()
-            thread.join(1.7)
+            thread.join(1)
             dest = thread.global_move
+            del thread
+
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
