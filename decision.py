@@ -6,7 +6,7 @@ Created on Fri Feb  2 11:29:05 2018
 """
 import struct
 import logging
-from time import time
+from time import time,sleep
 logging.basicConfig(level = logging.DEBUG)
 
 
@@ -15,6 +15,8 @@ from algorithm import splittercell
 from algorithm import alphabeta
 from algorithm import multisplit
 
+TIME_OUT = 1.7
+
 class Actor:
     def __init__(self, algorithm = 1):
         self.queue = []
@@ -22,6 +24,7 @@ class Actor:
         self.target = []
         
     def action(self,grid,turn):
+        top = time()
         algorithm = self.algorithm
         if self.algorithm == 4:
             if len(grid.humans) <= 1:
@@ -29,36 +32,33 @@ class Actor:
             elif turn < 3:
                 algorithm = 2
         
-        print(sum(grid.allies.values()))
-        print(sum(grid.enemies.values()))
-        print(len(grid.enemies))
-        if sum(grid.allies.values()) < sum(grid.enemies.values()) and len(grid.humans) == 0 and len(grid.enemies) == 1:
-            algorithm = 3
-
         logging.info("choosing algorithm : {}".format(algorithm))
         if algorithm == 4:
             top = time()
-            thread = multisplit.MultisplitThread(grid)
-            thread.start()
-            thread.join(1.7)
-            self.queue = thread.queue
-            del thread
+            self.thread = multisplit.MultisplitThread(grid)
+            self.thread.start()
+            sleep(TIME_OUT)
+            self.queue = list(self.thread.queue)
+
 
         if algorithm == 3:
             top = time()
-            thread = splittercell.SplittercellThread(grid)
-            thread.start()
-            thread.join(1.7)
-            self.queue = thread.queue
-            del thread
+            self.thread = splittercell.SplittercellThread(grid)
+            self.thread.start()
+            sleep(TIME_OUT)
+            self.queue = list(self.thread.queue)
+
 
         elif algorithm == 2:
-            top = time()
-            thread = alphabeta.AlphabetaThread(grid)
-            thread.start()
-            thread.join(1)
-            dest = thread.global_move
-            del thread
+
+            self.thread = alphabeta.AlphabetaThread(grid)
+            self.thread.start()
+            sleep(TIME_OUT)
+            if len(self.thread.global_move) > 0:
+                dest = dict(self.thread.global_move)
+            else:
+                dest = None
+
 
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
@@ -75,6 +75,7 @@ class Actor:
                         if not (ally[0] == destination[0] and ally[1] == destination[1]):
                             self.queue.append(move)
             logging.debug("decision duration: {}".format(time() - top))
+        logging.debug('turn moves :\n {}'.format(self.queue))
 
 
     def send_moves(self):
@@ -89,3 +90,4 @@ class Actor:
 
     def clean_moves(self):
         self.queue = []
+        del self.thread
