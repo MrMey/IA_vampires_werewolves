@@ -15,7 +15,7 @@ from algorithm import splittercell
 from algorithm import alphabeta
 from algorithm import multisplit
 
-TIME_OUT = 1.7
+TIME_OUT = 1.5
 
 class Actor:
     def __init__(self, algorithm = 1):
