@@ -2,6 +2,7 @@ import logging
 from operator import itemgetter
 logging.basicConfig(level = logging.DEBUG)
 
+from threading import Lock, Thread
 
 from grid.grid import Grid
 
@@ -143,7 +144,21 @@ def get_dest(grid, ally):
         moves += choose_humans(grid, ally)
     else:
         moves += choose_enemies(grid, ally)
-
-
-    
     return moves
+
+class MultisplitThread(Thread):
+    def __init__(self, grid):
+        Thread.__init__(self)
+        self.grid = grid
+        self.queue = []
+    
+    def run(self):
+        for ally in self.grid.allies:
+            logging.debug("humans: {}".format(self.grid.humans))
+            logging.debug("allies: {}".format(self.grid.allies))
+            logging.debug("enemies: {}".format(self.grid.enemies))
+
+            move = get_dest(self.grid, ally)
+
+            # move must be a list
+            self.queue += move

@@ -82,7 +82,7 @@ class Connector:
             v = struct.unpack("1B",self.sock.recv(1))[0]
             l = struct.unpack("1B",self.sock.recv(1))[0]
             changes += [x,y,h,v,l]
-        logging.debug(("UPD",(n,changes)))
+
         return ("UPD",(n,changes))
     
     def receive_END(self):

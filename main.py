@@ -10,7 +10,7 @@ import struct
 import sys
 import threading
 import logging
-logging.basicConfig(filename = 'log.txt',level = logging.DEBUG)
+logging.basicConfig(level = logging.DEBUG)
 
 from connector import Connector
 from grid.grid import Grid
@@ -69,14 +69,10 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
             break
 
         # prend la decision
-        actor.run(grid)
-
-        while time.time()-start_time < TIME_OUT:
-            time.sleep(0.01)
+        actor.action(grid, turn)
 
         # envoie file d'actions au serveur
         conn.send(actor.send_moves())
-        actor.stop()
         # vide la file d'action pour prochain tour
         actor.clean_moves()
 

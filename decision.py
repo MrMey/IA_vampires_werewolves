@@ -7,7 +7,6 @@ Created on Fri Feb  2 11:29:05 2018
 import struct
 import logging
 from time import time
-import threading
 logging.basicConfig(level = logging.DEBUG)
 
 
@@ -16,46 +15,61 @@ from algorithm import splittercell
 from algorithm import alphabeta
 from algorithm import multisplit
 
-class Actor(threading.Thread):
+class Actor:
     def __init__(self, algorithm = 1):
-        threading.Thread.__init__(self)
-        self._stop_event = threading.Event()
         self.queue = []
         self.algorithm = algorithm
         self.target = []
-
-    def stop(self):
-        self._stop_event.set()
-
-    def stopped(self):
-        return self._stop_event.is_set()
         
-    def run(self,grid):
-        if self.algorithm in [1, 3, 4]:
-            for ally in grid.allies:
-                logging.debug("humans: {}".format(grid.humans))
-                logging.debug("allies: {}".format(grid.allies))
-                logging.debug("enemies: {}".format(grid.enemies))
-                if self.algorithm == 1:
-                    move = greedy.get_dest(grid, ally)
-                elif self.algorithm == 3:
-                    move = splittercell.get_dest(grid, ally)
-                elif self.algorithm == 4:
-                    move = multisplit.get_dest(grid, ally)
+    def action(self,grid,turn):
+        algorithm = self.algorithm
+        if self.algorithm == 4:
+            if len(grid.humans) <= 1:
+                algorithm = 2
+            elif turn < 3:
+                algorithm = 2
+        
+        print(sum(grid.allies.values()))
+        print(sum(grid.enemies.values()))
+        print(len(grid.enemies))
+        if sum(grid.allies.values()) < sum(grid.enemies.values()) and len(grid.humans) == 0 and len(grid.enemies) == 1:
+            algorithm = 3
 
-                # move must be a list
-                self.queue += move
-        elif self.algorithm == 2:
+        logging.info("choosing algorithm : {}".format(algorithm))
+        if algorithm == 4:
             top = time()
-            dest = alphabeta.get_dest_alpha_beta(grid)
+            thread = multisplit.MultisplitThread(grid)
+            thread.start()
+            thread.join(1.7)
+            self.queue = thread.queue
+
+        if algorithm == 3:
+            top = time()
+            thread = splittercell.SplittercellThread(grid)
+            thread.start()
+            thread.join(1.7)
+            self.queue = thread.queue
+
+        elif algorithm == 2:
+            top = time()
+            thread = alphabeta.AlphabetaThread(grid)
+            thread.start()
+            thread.join(1.7)
+            dest = thread.global_move
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
-            for ally in dest:
-                for destination in dest[ally]:
-                    move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
-                    logging.debug("move {}".format(move))
-                    self.queue.append(move)
+            logging.debug("dest: {}".format(dest))
+
+            if dest is not None:
+                for ally in dest:
+                    for destination in dest[ally]:
+                        move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                        if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
+                            logging.debug("ERROR!!!")
+                        logging.debug("move {}".format(move))
+                        if not (ally[0] == destination[0] and ally[1] == destination[1]):
+                            self.queue.append(move)
             logging.debug("decision duration: {}".format(time() - top))
 
 
