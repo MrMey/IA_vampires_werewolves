@@ -31,7 +31,7 @@ def get_closest_point(grid, srce, dest, avoid_enemies = True, avoid_stronger_hum
         idx += 1
     return moves[idx-1][0], moves[idx-1][1]
 
-def choose_humans(grid, ally, nb_ally = None):
+def choose_humans(grid, ally, nb_ally = None, ally_dest = []):
     if not nb_ally:
         nb_ally = grid.allies[ally]
     
@@ -58,15 +58,25 @@ def choose_humans(grid, ally, nb_ally = None):
     else:
         # s'il reste des allies on se regroupe
         if len(grid.allies) > 1:
-            target = sorted([ (get_distance(ally,al), al) for al in grid.allies ], key=itemgetter(0))
-            dest = target[1][1]
-            moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
+                if len(ally_dest) > 0:
+                    target = sorted([ (get_distance(ally,al), al) for al in ally_dest], key=itemgetter(0))
+                    if target[1][0] == 1:
+                        logging.debug("target {}".format(target))
+                        dest = get_closest_point(grid, ally, target[1][1])
+                        moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
+                        return moves
+    
+                target = sorted([ (get_distance(ally,al), al) for al in grid.allies], key=itemgetter(0))
+                logging.debug("target {}".format(target))
+                dest = get_closest_point(grid, ally, target[1][1])
+                moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
+                return moves
         # sinon on cherche un ennemies
         else:
             return choose_enemies(grid,ally,nb_ally)
     return moves
 
-def choose_enemies(grid, ally, nb_ally = None):
+def choose_enemies(grid, ally, nb_ally = None, ally_dest = []):
     if not nb_ally:
         nb_ally = grid.allies[ally]
     moves = []
@@ -81,7 +91,15 @@ def choose_enemies(grid, ally, nb_ally = None):
             return moves
     # s'il reste des allies on se regroupe
     if len(grid.allies) > 1:
-            target = sorted([ (get_distance(ally,al), al) for al in grid.allies ], key=itemgetter(0))
+            if len(ally_dest) > 0:
+                target = sorted([ (get_distance(ally,al), al) for al in ally_dest], key=itemgetter(0))
+                if target[1][0] == 1:
+                    logging.debug("target {}".format(target))
+                    dest = get_closest_point(grid, ally, target[1][1])
+                    moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
+                    return moves
+ 
+            target = sorted([ (get_distance(ally,al), al) for al in grid.allies], key=itemgetter(0))
             logging.debug("target {}".format(target))
             dest = get_closest_point(grid, ally, target[1][1])
             moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
@@ -128,7 +146,7 @@ def spread(grid,ally,nb_cells, nb_ally = None):
     return moves
   
         
-def get_dest(grid, ally):
+def get_dest(grid, ally, ally_dest):
     # Si il y a des humains
     #   Si le plus proche est battable, l'attaquer
     #   Sinon, aller au 2ème plus proche, etc.
@@ -141,9 +159,9 @@ def get_dest(grid, ally):
     if grid.allies[ally] == 1:
         moves += choose_screening(grid,ally)
     elif len(grid.humans) > 0:
-        moves += choose_humans(grid, ally)
+        moves += choose_humans(grid, ally, ally_dest=ally_dest)
     else:
-        moves += choose_enemies(grid, ally)
+        moves += choose_enemies(grid, ally, ally_dest=ally_dest)
     return moves
 
 class MultisplitThread(Thread):
@@ -151,14 +169,15 @@ class MultisplitThread(Thread):
         Thread.__init__(self)
         self.grid = grid
         self.queue = []
-    
+        self.ally_dest = []
+
     def run(self):
         for ally in self.grid.allies:
             logging.debug("humans: {}".format(self.grid.humans))
             logging.debug("allies: {}".format(self.grid.allies))
             logging.debug("enemies: {}".format(self.grid.enemies))
 
-            move = get_dest(self.grid, ally)
+            move = get_dest(self.grid, ally, self.ally_dest)
 
             # move must be a list
             self.queue += move

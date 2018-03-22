@@ -15,7 +15,7 @@ from algorithm import splittercell
 from algorithm import alphabeta
 from algorithm import multisplit
 
-TIME_OUT = 1.7
+TIME_OUT = 1.5
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -28,7 +28,9 @@ class Actor:
         top = time()
         algorithm = self.algorithm
         if self.algorithm == 5:
-            if len(grid.humans) <= 1:
+            if len(grid.allies) > 3:
+                algorithm = 4
+            elif len(grid.humans) <= 1:
                 algorithm = 2
             elif turn < 3:
                 algorithm = 2
