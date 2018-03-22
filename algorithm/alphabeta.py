@@ -19,7 +19,7 @@ def cache_hash(humans, allies, enemies, depth, max):
     return hash((hash(frozenset(humans.items())), hash(frozenset(allies.items())), hash(frozenset(enemies.items())), depth, max))
 
 
-def heuristic(humans, allies, enemies, probabilistic):
+def heuristic(humans, allies, enemies, probabilistic, x_max, y_max):
     if len(allies) == 0 or (probabilistic and len(humans) != 0):
         return -2*(sum(enemies.values()) + sum(humans.values()))
     if len(enemies) == 0:
@@ -67,6 +67,9 @@ def heuristic(humans, allies, enemies, probabilistic):
                     result += (1 / len(humans))*min(0, ((p ** 2) * allies[ally] / (max(1, dmin))) - (((1 - p) ** 2) * enemies[enemy] / (max(1, dmin))))
 
                 # print(result)
+        # défavoriser les coins
+        result -= 0.01 * (abs(ally[0] - (x_max/2))/x_max + abs(ally[1] - (y_max/2))/y_max)
+
     return result
 
 class AlphabetaThread(Thread):
@@ -82,7 +85,7 @@ class AlphabetaThread(Thread):
     def alpha_beta_max(self, depth, humans, allies, enemies, interval, dimensions, get_moves=False):
         global lock
         # logging.debug("MAX {}".format(depth))
-        h = heuristic(humans, allies, enemies, False)
+        h = heuristic(humans, allies, enemies, False, dimensions[0]-1, dimensions[1]-1)
         if depth <= 0:
             return h
         else:
@@ -109,7 +112,7 @@ class AlphabetaThread(Thread):
                 child = children[i]
                 i += 1
                 if child[4]:
-                    heu = heuristic(child[0], child[1], child[2], True)
+                    heu = heuristic(child[0], child[1], child[2], True, dimensions[0]-1, dimensions[1]-1)
                     val = heu
                 else:
                     val = self.alpha_beta_min(depth - 1, child[0], child[1], child[2], inter, dimensions)
@@ -131,7 +134,7 @@ class AlphabetaThread(Thread):
     def alpha_beta_min(self, depth, humans, allies, enemies, interval, dimensions):
         # logging.debug("MIN {}".format(depth))
         global lock
-        h = heuristic(humans, allies, enemies, False)
+        h = heuristic(humans, allies, enemies, False, dimensions[0]-1, dimensions[1]-1)
         if depth <= 0:
             return h
         else:
@@ -152,7 +155,7 @@ class AlphabetaThread(Thread):
                 child = children[i]
                 i += 1
                 if child[4]:
-                    heu = heuristic(child[0], child[1], child[2], True)
+                    heu = heuristic(child[0], child[1], child[2], True, dimensions[0]-1, dimensions[1]-1)
                     val = heu
                 else:
                     val = self.alpha_beta_max(depth - 1, child[0], child[1], child[2], inter, dimensions)
@@ -312,7 +315,7 @@ class AlphabetaThread(Thread):
 allies = {(2, 2): 3}
 enemies = {(5, 5): 3}
 
-print("origin heuristic: {}".format(heuristic(humans, allies, enemies, False, None)))
+print("origin heuristic: {}".format(heuristic(humans, allies, enemies, False, None, x_max, y_max)))
 top = time.time()
 print(alpha_beta_max(2, humans, allies, enemies, (None, None), (15, 15), None, True))
 print(time.time()-top)
