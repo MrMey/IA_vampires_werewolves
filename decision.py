@@ -27,7 +27,7 @@ class Actor:
     def action(self,grid,turn):
         top = time()
         algorithm = self.algorithm
-        if self.algorithm == 5:
+        if self.algorithm == 4:
             if len(grid.humans) <= 1:
                 algorithm = 2
             elif turn < 3:
@@ -60,7 +60,7 @@ class Actor:
             else:
                 dest = None
 
-            logging.debug("alphabeta duration: {}".format(time() - top))
+
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
