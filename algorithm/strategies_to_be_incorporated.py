@@ -30,7 +30,7 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
     j = group[1]
     # best move depending of the strategy
     moves = []
-    if strategy == "flee":
+    if strategy == "simple":
         locked = locked_extend(locked_cells, humans, enemies, allies[group])
         for i_new in range(i-1, i+2):
             for j_new in range(j-1, j+2):
@@ -288,5 +288,5 @@ if __name__ == "__main__":
     locked_cells = []
     x_max = 20
     y_max = 20
-    a = best_next_move_for_strategy("flee", group, humans, allies, enemies, locked_cells, x_max, y_max, nbr_cibles=3)
+    a = best_next_move_for_strategy("simple", group, humans, allies, enemies, locked_cells, x_max, y_max, nbr_cibles=3)
     print(a)
