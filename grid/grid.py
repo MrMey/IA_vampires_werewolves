@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 logging.basicConfig(level = logging.DEBUG)
 
@@ -10,7 +8,6 @@ class Grid:
         self.vampires = {}
         self.humans = {}
         self.wolves = {}
-        self.locked_cell = []
 
     def set_species(self,species):
         if species not in ['wolves','vampires']:
@@ -81,11 +78,9 @@ class Grid:
             liste = content[1]
             for i in range(0, n):
                 position = [ x for x in liste[i*5:i*5+5] ]
-                logging.debug(position)
                 self.update_group(*position)
 
     def update_map(self,content):
-        self.clean_locked_cell()
         self.update_all_groups(content)
 
     def initiate_all_groups(self, content, ally_start):
@@ -111,7 +106,6 @@ class Grid:
                     else:
                         raise Exception("did not find our species")
 
-                logging.debug(position)
                 self.update_group(*position)
 
     def get_group_at(self, x,y):
@@ -169,20 +163,11 @@ class Grid:
         return cells
 
     def get_ally_possible_moves(self,pos):
-        return [move for move in self.get_range(pos) if move not in self.locked_cell]
+        return [move for move in self.get_range(pos)]
 
     def is_in_map(self, pos):
         return 0 <= pos[1] < self.height and 0 <= pos[0] < self.width
-
-    def is_locked_cell(self,pos):
-        return pos in self.locked_cell
-
-    def add_locked_cell(self,pos):
-        self.locked_cell += [pos]
-
-    def clean_locked_cell(self):
-        self.locked_cell = []
-
+    
     def get_enemy_range(self):
         cells = []
         for enemy in self.enemies:

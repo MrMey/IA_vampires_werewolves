@@ -8,6 +8,7 @@ import os
 import time
 import struct
 import sys
+import threading
 import logging
 logging.basicConfig(level = logging.DEBUG)
 
@@ -17,8 +18,9 @@ from decision import Actor
 
 
 EMULATE_SERVER = True
+TIME_OUT = 1
 
-def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000, second_player=False):
+def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
     """
 
     :param name: name of the ai
@@ -47,10 +49,6 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000, second_player=Fals
 
     turn = 0
     # tant que la partie est active
-
-    """if second_player:
-        conn.receive()"""
-
     while conn.connected:
 
         # écoute le serveur
@@ -71,7 +69,7 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000, second_player=Fals
             break
 
         # prend la decision
-        actor.action(grid)
+        actor.action(grid, turn)
 
         # envoie file d'actions au serveur
         conn.send(actor.send_moves())

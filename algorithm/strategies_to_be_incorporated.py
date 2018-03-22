@@ -290,3 +290,4 @@ if __name__ == "__main__":
     y_max = 20
     a = best_next_move_for_strategy("simple", group, humans, allies, enemies, locked_cells, x_max, y_max, nbr_cibles=3)
     print(a)
+

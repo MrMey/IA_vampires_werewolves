@@ -12,7 +12,6 @@ STRATEGIES = ["simple", "split"]
 DEPTH = 7
 
 cache = {}
-lock = Lock()
 
 
 def cache_hash(humans, allies, enemies, depth, max):
@@ -68,37 +67,39 @@ def heuristic(humans, allies, enemies, probabilistic, x_max, y_max):
 
                 # print(result)
         # défavoriser les coins
-        result -= 0.01 * (abs(ally[0] - (x_max/2))/x_max + abs(ally[1] - (y_max/2))/y_max)
-
+        result -= 0.001 * (abs(ally[0] - (x_max/2))/x_max + abs(ally[1] - (y_max/2))/y_max)
+    if len(humans) == 0:
+        result += max(allies.values()) - max(enemies.values())
     return result
 
 class AlphabetaThread(Thread):
     def __init__(self, grid):
         Thread.__init__(self)
         self.covered_branches = 0
-        self.global_move = None
+        self.global_move = {}
         self.grid = grid
+        self.lock = Lock()
+        self.start_time = time.time()
 
     def get_next_move_alpha_beta(self, depth, grid):
         return self.alpha_beta_max(depth, grid.humans, grid.allies, grid.enemies, (None, None), (grid.width, grid.height), True)
 
     def alpha_beta_max(self, depth, humans, allies, enemies, interval, dimensions, get_moves=False):
-        global lock
         # logging.debug("MAX {}".format(depth))
         h = heuristic(humans, allies, enemies, False, dimensions[0]-1, dimensions[1]-1)
         if depth <= 0:
             return h
         else:
             hash_code = cache_hash(humans, allies, enemies, depth, True)
-            with lock:
-                if hash_code in cache:
-                    # logging.debug("CACHE HIT")
-                    if get_moves:
+            if hash_code in cache:
+                # logging.debug("CACHE HIT")
+                if get_moves:
+                    with self.lock:
                         self.covered_branches = 1
                         self.global_move = cache[hash_code][1]
-                        return cache[hash_code][1]
-                    else:
-                        return cache[hash_code][0]
+                    return cache[hash_code][1]
+                else:
+                    return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
             children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
@@ -115,17 +116,21 @@ class AlphabetaThread(Thread):
                     heu = heuristic(child[0], child[1], child[2], True, dimensions[0]-1, dimensions[1]-1)
                     val = heu
                 else:
-                    val = self.alpha_beta_min(depth - 1, child[0], child[1], child[2], inter, dimensions)
+                    if 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
+                        val = self.alpha_beta_min(max(0, depth - 2), child[0], child[1], child[2], inter, dimensions)
+                    else:
+                        val = self.alpha_beta_min(depth - 1, child[0], child[1], child[2], inter, dimensions)
                 if inter[0] is None or (val is not None and val > inter[0]):
                     move = child[3]
                     if get_moves:
-                        self.global_move = move
+                        with self.lock:
+                            self.global_move = move
                     inter = (val, inter[1])
                 # print(inter)
                 if get_moves:
-                    self.covered_branches += 1/len(children)
-            with lock:
-                cache[hash_code] = (inter[0], move)
+                    with self.lock:
+                        self.covered_branches += 1/len(children)
+            cache[hash_code] = (inter[0], move)
             if get_moves:
                 print("FINAL MOVE: {}\n".format(move))
                 return move
@@ -139,10 +144,9 @@ class AlphabetaThread(Thread):
             return h
         else:
             hash_code = cache_hash(humans, allies, enemies, depth, False)
-            with lock:
-                if hash_code in cache:
-                    # logging.debug("CACHE HIT")
-                    return cache[hash_code][0]
+            if hash_code in cache:
+                # logging.debug("CACHE HIT")
+                return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
             children = self.get_relevant_children_enemies(humans, allies, enemies, dimensions)
@@ -158,14 +162,16 @@ class AlphabetaThread(Thread):
                     heu = heuristic(child[0], child[1], child[2], True, dimensions[0]-1, dimensions[1]-1)
                     val = heu
                 else:
-                    val = self.alpha_beta_max(depth - 1, child[0], child[1], child[2], inter, dimensions)
+                    if 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
+                        val = self.alpha_beta_max(max(0, depth - 2), child[0], child[1], child[2], inter, dimensions)
+                    else:
+                        val = self.alpha_beta_max(depth - 1, child[0], child[1], child[2], inter, dimensions)
                 if inter[1] is None or (val is not None and val < inter[1]):
                     move = child[3]
                     inter = (inter[0], val)
                 # print(inter)
             # print("FINAL MOVE: {}\n".format(move))
-            with lock:
-                cache[hash_code] = (inter[1], move)
+            cache[hash_code] = (inter[1], move)
             return inter[1]
 
     @staticmethod

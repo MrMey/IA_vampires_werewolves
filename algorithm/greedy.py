@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 from operator import itemgetter
 logging.basicConfig(level = logging.DEBUG)
@@ -37,7 +35,7 @@ def get_closest_point(grid, srce, dest, avoid_enemies = True):
 
 def choose_allies(grid, ally):
     allies = sorted([ (get_distance(ally,al), al) for al in grid.allies ], key=itemgetter(0))
-    return allies[1][1] # On prend le 2eme élément car le 1er est nous-mêmes.
+    return allies[1][1] # On prend le 2ème élément car le 1er est nous-mêmes.
 
 
 def choose_humans(grid, ally):
@@ -89,5 +87,4 @@ def get_dest(grid, ally):
         logging.debug('target {} enemy units at {}'.format(grid.get_group_at(target[0],target[1]),target))
         dest = get_closest_point(grid, ally, target)
     logging.debug('destination {}'.format(dest))
-    grid.add_locked_cell(dest)
     return [(ally[0], ally[1], grid.get_group_at(ally[0],ally[1]), dest[0], dest[1])]
