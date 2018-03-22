@@ -4,11 +4,12 @@ import itertools
 import time
 import logging
 from threading import Lock, Thread
+import sys
 
 from algorithm.strategies_to_be_incorporated import best_next_move_for_strategy
 
 
-STRATEGIES = ["convert", "flee", "split", "random", "attack"]
+STRATEGIES = ["convert", "flee", "split", "attack"]
 DEPTH = 7
 
 cache = {}
@@ -69,12 +70,15 @@ def heuristic(humans, allies, enemies, probabilistic):
                 # print(result)
     return result
 
+
 class AlphabetaThread(Thread):
     def __init__(self, grid):
         Thread.__init__(self)
         self.covered_branches = 0
+        self.lock = Lock()
         self.global_move = None
         self.grid = grid
+        self.carry_on = True
 
     def get_next_move_alpha_beta(self, depth, grid):
         return self.alpha_beta_max(depth, grid.humans, grid.allies, grid.enemies, (None, None), (grid.width, grid.height), True)
@@ -92,13 +96,17 @@ class AlphabetaThread(Thread):
                     # logging.debug("CACHE HIT")
                     if get_moves:
                         self.covered_branches = 1
-                        self.global_move = cache[hash_code][1]
+                        with self.lock:
+                            self.global_move = cache[hash_code][1]
                         return cache[hash_code][1]
                     else:
                         return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
-            children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
+            if self.carry_on:
+                children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
+            else:
+                children = []
             if len(children) == 0:
                 logging.debug("NO CHILDREN!!!")
                 return h
@@ -116,7 +124,8 @@ class AlphabetaThread(Thread):
                 if inter[0] is None or (val is not None and val > inter[0]):
                     move = child[3]
                     if get_moves:
-                        self.global_move = move
+                        with self.lock:
+                            self.global_move = move
                     inter = (val, inter[1])
                 # print(inter)
                 if get_moves:
@@ -129,6 +138,8 @@ class AlphabetaThread(Thread):
             return inter[0]
 
     def alpha_beta_min(self, depth, humans, allies, enemies, interval, dimensions):
+        if not self.carry_on:
+            sys.exit(0)
         # logging.debug("MIN {}".format(depth))
         global lock
         h = heuristic(humans, allies, enemies, False)
@@ -142,7 +153,10 @@ class AlphabetaThread(Thread):
                     return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
-            children = self.get_relevant_children_enemies(humans, allies, enemies, dimensions)
+            if self.carry_on:
+                children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
+            else:
+                children = []
             if len(children) == 0:
                 return h
             i = 0
@@ -291,8 +305,8 @@ class AlphabetaThread(Thread):
         # logging.debug("cache length: {}".format(len(cache)))
         global DEPTH
         DEPTH = max(1, int(8 - 1.5*(len(self.grid.allies)+len(self.grid.enemies))))
-        # print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
-        # print(f"DEPTH: {DEPTH}")
+        print(f"allies: {len(self.grid.allies)}, enemies: {len(self.grid.enemies)})")
+        print(f"DEPTH: {DEPTH}")
         global STRATEGIES
         if len(self.grid.allies) >= 3:
             if "split" in STRATEGIES:
@@ -301,7 +315,7 @@ class AlphabetaThread(Thread):
             if "split" not in STRATEGIES:
                 STRATEGIES.append("split")
         if len(self.grid.humans) == 0:
-            STRATEGIES = ["final_rounds", "random"]
+            STRATEGIES = ["final_rounds"]
         return self.get_next_move_alpha_beta(DEPTH, self.grid)
 
     def run(self):

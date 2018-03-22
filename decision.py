@@ -6,7 +6,7 @@ Created on Fri Feb  2 11:29:05 2018
 """
 import struct
 import logging
-from time import time
+import time
 logging.basicConfig(level = logging.DEBUG)
 
 
@@ -37,12 +37,15 @@ class Actor:
                 # move must be a list
                 self.queue += move
         elif self.algorithm == 2:
-            top = time()
+            top = time.time()
             thread = alphabeta.AlphabetaThread(grid)
             thread.start()
-            thread.join(1)
-            dest = thread.global_move
-            del thread
+            thread.join(1.7)
+            dest = None
+            with thread.lock:
+                thread.carry_on = False
+                if thread.global_move:
+                    dest = dict(thread.global_move)
             logging.debug("humans: {}".format(grid.humans))
             logging.debug("allies: {}".format(grid.allies))
             logging.debug("enemies: {}".format(grid.enemies))
@@ -56,7 +59,7 @@ class Actor:
                         logging.debug("move {}".format(move))
                         if not (ally[0] == destination[0] and ally[1] == destination[1]):
                             self.queue.append(move)
-            logging.debug("decision duration: {}".format(time() - top))
+            # logging.debug("decision duration: {}".format(time.time() - top))
 
 
     def send_moves(self):
