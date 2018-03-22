@@ -28,9 +28,7 @@ class Actor:
         top = time()
         algorithm = self.algorithm
         if self.algorithm == 5:
-            if len(grid.humans) <= 1:
-                algorithm = 2
-            elif turn < 3:
+            if len(grid.allies) <= 3 and (len(grid.humans) <= 1 or turn < 3):
                 algorithm = 2
             else:
                 algorithm = 4
@@ -61,6 +59,7 @@ class Actor:
             with self.thread.lock:
                 if self.thread.covered_branches == 0:
                     go_on = False
+                    self.thread.carry_on = False
             if go_on:
                 sleep(2*TIME_OUT / 3)
                 with self.thread.lock:

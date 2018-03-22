@@ -59,7 +59,7 @@ def choose_humans(grid, ally, nb_ally = None):
         # s'il reste des allies on se regroupe
         if len(grid.allies) > 1:
             target = sorted([ (get_distance(ally,al), al) for al in grid.allies ], key=itemgetter(0))
-            dest = target[1][1]
+            dest = get_closest_point(grid, ally,target[1][1])
             moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
         # sinon on cherche un ennemies
         else:
