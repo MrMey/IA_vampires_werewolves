@@ -78,6 +78,7 @@ class AlphabetaThread(Thread):
         self.grid = grid
         self.lock = Lock()
         self.start_time = time.time()
+        self.carry_on = True
 
     def get_next_move_alpha_beta(self, depth, grid):
         return self.alpha_beta_max(depth, grid.humans, grid.allies, grid.enemies, (None, None), (grid.width, grid.height), True)
@@ -100,7 +101,11 @@ class AlphabetaThread(Thread):
                     return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
-            children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
+            with self.lock:
+                if self.carry_on:
+                    children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
+                else:
+                    children = []
             if len(children) == 0:
                 logging.debug("NO CHILDREN!!!")
                 return h
@@ -114,7 +119,7 @@ class AlphabetaThread(Thread):
                     heu = heuristic(child[0], child[1], child[2], True)
                     val = heu
                 else:
-                    if 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
+                    if (time.time() - self.start_time) != 0 and 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
                         val = self.alpha_beta_min(max(0, depth - 2), child[0], child[1], child[2], inter, dimensions)
                     else:
                         val = self.alpha_beta_min(depth - 1, child[0], child[1], child[2], inter, dimensions)
@@ -146,7 +151,11 @@ class AlphabetaThread(Thread):
                 return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
-            children = self.get_relevant_children_enemies(humans, allies, enemies, dimensions)
+            with self.lock:
+                if self.carry_on:
+                    children = self.get_relevant_children_enemies(humans, allies, enemies, dimensions)
+                else:
+                    children = []
             if len(children) == 0:
                 return h
             i = 0
@@ -159,7 +168,7 @@ class AlphabetaThread(Thread):
                     heu = heuristic(child[0], child[1], child[2], True)
                     val = heu
                 else:
-                    if 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
+                    if (time.time() - self.start_time) != 0 and 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
                         val = self.alpha_beta_max(max(0, depth - 2), child[0], child[1], child[2], inter, dimensions)
                     else:
                         val = self.alpha_beta_max(depth - 1, child[0], child[1], child[2], inter, dimensions)
@@ -222,8 +231,7 @@ class AlphabetaThread(Thread):
             if AlphabetaThread.is_actual_move(moves_set, corr):
                 new_humans, new_allies, new_enemies, probabilistic = dict(humans), dict(allies), dict(enemies), False
                 for i in range(len(moves_set)):
-                    temp = AlphabetaThread.get_child_from_move(new_humans, new_allies, new_enemies, corr[i], moves_set[i])
-                    new_humans, new_allies, new_enemies, probabilistic = temp[0], temp[1], temp[2], probabilistic or temp[3]
+                    probabilistic = probabilistic or AlphabetaThread.get_child_from_move(new_humans, new_allies, new_enemies, corr[i], moves_set[i])
                 children.append(
                     (new_humans, new_allies, new_enemies, {corr[i]: moves_set[i] for i in range(len(moves_set))},
                      probabilistic))
@@ -270,7 +278,7 @@ class AlphabetaThread(Thread):
                     probabilistic = True
             else:
                 new_allies[destination] = number
-        return new_humans, new_allies, new_enemies, probabilistic
+        return probabilistic
 
     @staticmethod
     def is_actual_move(moves_set, corr):
@@ -298,7 +306,7 @@ class AlphabetaThread(Thread):
         global DEPTH
         DEPTH = max(1, int(8 - 1.5*(len(self.grid.allies)+len(self.grid.enemies))))
         # print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
-        # print(f"DEPTH: {DEPTH}")
+        # print("DEPTH: {}".format(DEPTH))
         global STRATEGIES
         if len(self.grid.allies) >= 3:
             if "split" in STRATEGIES:
