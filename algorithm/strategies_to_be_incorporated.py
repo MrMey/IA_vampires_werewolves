@@ -30,30 +30,36 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
     j = group[1]
     # best move depending of the strategy
     moves = []
-    if strategy == "convert":
-        target = find_closest(group, humans, 1, nbr_cibles, allies)
-        locked = locked_extend("convert", locked_cells, humans, enemies, allies[group])
-        # on suppose qu'un groupe allié sur le chemin ne pose pas de problème:
-        #     soit il fusionne soit il est dans locked_cells
-        # si l'enemi est faible, on le "mange" au passage
-        # si l'enemi est moyen
-        #               -> on l'évite
-        # si l'enemi est fort
-        #               -> on abandonne d'aller convertir la maison dans cette direction
-        #                  car un déplacement vers elle nous ferait tuer le groupe
-        for t in target:
-            # trouve la direction à prendre...
-            i_new, j_new = find_direction_for_target(group, t)
-            #print('     target : ' + str(t) + '  direction : ' + str((i_new, j_new)))
-            # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
-            if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
-                (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
-                if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and ((i1, j1, allies[group], strategy),) not in moves:
-                    moves.append(((i1, j1, allies[group], strategy),))
-                if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and ((i2, j2, allies[group], strategy),) not in moves:
-                    moves.append(((i2, j2, allies[group], strategy),))
-            elif ((i_new, j_new, allies[group], strategy),) not in moves and ((i_new, j_new) not in locked) and not hors_carte(i_new, j_new, x_max, y_max):
-                moves.append(((i_new, j_new, allies[group], strategy),))
+    if strategy == "flee":
+        locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
+        for i_new in range(i-1, i+2):
+            for j_new in range(j-1, j+2):
+                if (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
+                    moves.append(((i_new, j_new, allies[group], strategy),))
+    # if strategy == "convert":
+    #     target = find_closest(group, humans, 1, nbr_cibles, allies)
+    #     locked = locked_extend("convert", locked_cells, humans, enemies, allies[group])
+    #     # on suppose qu'un groupe allié sur le chemin ne pose pas de problème:
+    #     #     soit il fusionne soit il est dans locked_cells
+    #     # si l'enemi est faible, on le "mange" au passage
+    #     # si l'enemi est moyen
+    #     #               -> on l'évite
+    #     # si l'enemi est fort
+    #     #               -> on abandonne d'aller convertir la maison dans cette direction
+    #     #                  car un déplacement vers elle nous ferait tuer le groupe
+    #     for t in target:
+    #         # trouve la direction à prendre...
+    #         i_new, j_new = find_direction_for_target(group, t)
+    #         #print('     target : ' + str(t) + '  direction : ' + str((i_new, j_new)))
+    #         # vérifie qu'il n'y a pas d'obstacles et que ce n'est pas hors de la carte
+    #         if (i_new,j_new) in locked or hors_carte(i_new, j_new, x_max, y_max):
+    #             (i1, j1, i2, j2) = try_avoiding(i, j, i_new, j_new)
+    #             if (i1, j1) not in locked and not hors_carte(i1, j1, x_max, y_max) and ((i1, j1, allies[group], strategy),) not in moves:
+    #                 moves.append(((i1, j1, allies[group], strategy),))
+    #             if (i2, j2) not in locked and not hors_carte(i2, j2, x_max, y_max) and ((i2, j2, allies[group], strategy),) not in moves:
+    #                 moves.append(((i2, j2, allies[group], strategy),))
+    #         elif ((i_new, j_new, allies[group], strategy),) not in moves and ((i_new, j_new) not in locked) and not hors_carte(i_new, j_new, x_max, y_max):
+    #             moves.append(((i_new, j_new, allies[group], strategy),))
     elif strategy == "attack":
         # on attaque aussi les groupes pas 1,5 fois plus faibles que nous
         target = find_closest(group, enemies, 0.33, nbr_cibles, allies)
@@ -72,12 +78,6 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                     moves.append(((i2, j2, allies[group], strategy),))
             elif ((i_new, j_new, allies[group], strategy,)) not in moves and (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
                 moves.append(((i_new, j_new, allies[group], strategy),))
-    elif strategy == "flee":
-        locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
-        for i_new in range(i-1, i+2):
-            for j_new in range(j-1, j+2):
-                if (i_new, j_new) not in locked and not hors_carte(i_new, j_new, x_max, y_max):
-                    moves.append(((i_new, j_new, allies[group], strategy),))
     elif strategy == "split":
         locked = locked_extend("flee", locked_cells, humans, enemies, allies[group])
         targets = find_targets_split(group, humans, allies, enemies)
@@ -160,21 +160,21 @@ def best_next_move_for_strategy(strategy, group, humans, allies, enemies, locked
                 if (x,y) not in locked and not hors_carte(x, y, x_max, y_max):
                     # logging.debug("LAST ROUND")
                     moves.append(((x, y, allies[group], strategy),))
-    elif strategy == "random":
-        i_new = i + random.randint(-1, 1)
-        if i_new != i:
-            j_new = j + random.randint(-1, 1)
-        else:
-            j_new = j + [-1, 1][random.randint(0, 1)]
-        if i_new < 0:
-            i_new += 1
-        if i_new > x_max:
-            i_new -= 1
-        if j_new < 0:
-            j_new += 1
-        if j_new > y_max:
-            j_new -= 1
-        moves.append(((i_new, j_new, allies[group]),))
+    # elif strategy == "random":
+    #     i_new = i + random.randint(-1, 1)
+    #     if i_new != i:
+    #         j_new = j + random.randint(-1, 1)
+    #     else:
+    #         j_new = j + [-1, 1][random.randint(0, 1)]
+    #     if i_new < 0:
+    #         i_new += 1
+    #     if i_new > x_max:
+    #         i_new -= 1
+    #     if j_new < 0:
+    #         j_new += 1
+    #     if j_new > y_max:
+    #         j_new -= 1
+    #     moves.append(((i_new, j_new, allies[group]),))
     else:
         raise Exception("unknown strategy, please implement it")
     return moves
@@ -291,53 +291,23 @@ def locked_extend(strategy, locked_cells, humans, enemies, group_nbr):
                 (pas pour la strategie attack) et les cases autour s'il est même assez puissant pour nous attaquer
     """
     locked_list = locked_cells
-    if strategy == "convert":
-        for human, nbr in humans.items():
-            if nbr > group_nbr:
-                locked_list.append(human)
-        for enemie, nbr in enemies.items():
-            if nbr > group_nbr * 1.5 :
-                locked_list += [enemie,
-                                (enemie[0]-1, enemie[1]-1),
-                                (enemie[0], enemie[1]-1),
-                                (enemie[0]-1, enemie[1]),
-                                (enemie[0]+1, enemie[1]-1),
-                                (enemie[0]+1, enemie[1]),
-                                (enemie[0]+1, enemie[1]+1),
-                                (enemie[0]-1, enemie[1]+1),
-                                (enemie[0], enemie[1]+1)]
-            elif nbr * 1.5 >= group_nbr :
+    for human, nbr in humans.items():
+        if nbr > group_nbr:
+            locked_list.append(human)
+    for enemie, nbr in enemies.items():
+        if nbr >= group_nbr * 1.5:
+            locked_list.append(enemie)
+            for x in range(enemie[0] - 1, enemie[0] + 2):
+                for y in range(enemie[1] - 1, enemie[1] + 2):
+                    try:
+                        potentiel = human[(x,y)]
+                        if (group_nbr + potentiel) * 1.5 < nbr:
+                            locked_list.append((x, y))
+                    except:
+                        locked_list.append((x, y))
+        elif nbr * 1.5 >= group_nbr:
+            if strategy != "attack":
                 locked_list += [enemie]
-    elif strategy == "attack":
-        for human, nbr in humans.items():
-            if nbr > group_nbr:
-                locked_list.append(human)
-        for enemie, nbr in enemies.items():
-            if nbr > group_nbr * 1.5 :
-                locked_list += [enemie,
-                                (enemie[0]-1, enemie[1]-1),
-                                (enemie[0], enemie[1]-1),
-                                (enemie[0]-1, enemie[1]),
-                                (enemie[0]+1, enemie[1]-1),
-                                (enemie[0]+1, enemie[1]),
-                                (enemie[0]+1, enemie[1]+1),
-                                (enemie[0]-1, enemie[1]+1),
-                                (enemie[0], enemie[1]+1)]
-    elif strategy == "flee":
-        for human, nbr in humans.items():
-            if nbr > group_nbr:
-                locked_list.append(human)
-        for enemie, nbr in enemies.items():
-            if nbr * 1.5 >= group_nbr :
-                locked_list += [enemie,
-                                (enemie[0]-1, enemie[1]-1),
-                                (enemie[0], enemie[1]-1),
-                                (enemie[0]-1, enemie[1]),
-                                (enemie[0]+1, enemie[1]-1),
-                                (enemie[0]+1, enemie[1]),
-                                (enemie[0]+1, enemie[1]+1),
-                                (enemie[0]-1, enemie[1]+1),
-                                (enemie[0], enemie[1]+1)]
     return locked_list
 
 
@@ -348,7 +318,7 @@ def hors_carte(i, j, x, y):
 
 if __name__ == "__main__":
     humans = {(1, 1): 6, (2, 5): 2, (5, 2): 1}
-    allies = {(2, 3): 12, (5, 5): 3, (2, 1): 1}
+    allies = {(2, 3): 1, (5, 5): 3, (2, 1): 1}
     enemies = {(3, 2): 1, (2, 4): 12}
     group = (2, 3)
     locked_cells = []
