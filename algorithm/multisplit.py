@@ -81,6 +81,7 @@ def choose_humans(grid, ally, nb_ally = None, ally_dest = []):
 def choose_enemies(grid, ally, nb_ally = None, ally_dest = []):
     if not nb_ally:
         nb_ally = grid.allies[ally]
+    
     moves = []
     enemies = sorted([ (get_distance(ally, en), en) for en in grid.enemies ], key=itemgetter(0))
 
@@ -95,7 +96,7 @@ def choose_enemies(grid, ally, nb_ally = None, ally_dest = []):
     if len(grid.allies) > 1:
             if len(ally_dest) > 0:
                 target = sorted([ (get_distance(ally,al), al) for al in ally_dest], key=itemgetter(0))
-                if target[1][0] == 1:
+                if len(target) > 0 and target[1][0] == 1:
                     logging.debug("target {}".format(target))
                     dest = get_closest_point(grid, ally, target[1][1])
                     moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
@@ -109,47 +110,16 @@ def choose_enemies(grid, ally, nb_ally = None, ally_dest = []):
     # sinon on fuit
     return run_away(grid,ally)
 
-def choose_screening(grid,ally, nb_ally = None):
-    if not nb_ally:
-        nb_ally = grid.allies[ally]
-    moves = []
-    enemies = sorted([ (get_distance(ally, en), en) for en in grid.enemies ], key=itemgetter(0))
-    enemy = enemies[0]
-    if enemy[0] == 1:
-        dest = enemy[1]
-        moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
-        
-    elif enemy[0] > 2:
-        target = enemy[1]
-        dest = get_closest_point(grid, ally, target, avoid_enemies = False)
-        moves += [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
-    logging.debug("screening {}".format(moves))
-    return moves
-
 def run_away(grid,ally, nb_ally= None):
     if not nb_ally:
         nb_ally = grid.allies[ally]
+    
     moves = grid.get_range(ally)
     dest = [move for move in moves if move not in grid.get_enemy_range() and grid.is_in_map(move)]
     if len(dest) > 0:
         dest = dest[0]
         return [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
     return []
-
-def spread(grid,ally,nb_cells, nb_ally = None):
-    if not nb_ally:
-        nb_ally = grid.allies[ally]
-    next_pos = grid.get_range(ally)
-    cases = min(nb_cells,nb_ally)
-    moves = []
-
-    for child in range(cases):
-        moves += [(ally[0], ally[1], int(nb_ally/nb_cells), next_pos[child][0], next_pos[child][1])]
-    
-    if nb_ally % nb_cells != 0:
-        moves[-1][2] += nb_ally % nb_cells
-    return moves
-  
         
 def get_dest(grid, ally, ally_dest):
     # Si il y a des humains

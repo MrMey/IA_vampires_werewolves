@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# splittercell is not currently working
+
 import logging
 from operator import itemgetter
 logging.basicConfig(level = logging.DEBUG)

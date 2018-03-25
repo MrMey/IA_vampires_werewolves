@@ -18,7 +18,7 @@ from algorithm import multisplit
 TIME_OUT = 1.7
 
 class Actor:
-    def __init__(self, algorithm = 1):
+    def __init__(self, algorithm = 2):
         self.queue = []
         self.algorithm = algorithm
         self.target = []
@@ -40,15 +40,6 @@ class Actor:
             self.thread.start()
             sleep(TIME_OUT)
             self.queue = list(self.thread.queue)
-
-
-        if algorithm == 3:
-            top = time()
-            self.thread = splittercell.SplittercellThread(grid)
-            self.thread.start()
-            sleep(TIME_OUT)
-            self.queue = list(self.thread.queue)
-
 
         elif algorithm == 2:
 
