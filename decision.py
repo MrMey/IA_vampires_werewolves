@@ -75,7 +75,6 @@ class Actor:
                         logging.debug("move {}".format(move))
                         if not (ally[0] == destination[0] and ally[1] == destination[1]):
                             self.queue.append(move)
-
         logging.debug('turn moves :\n {}'.format(self.queue))
 
 

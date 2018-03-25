@@ -1,4 +1,6 @@
 import logging
+# -*- coding: utf-8 -*-
+
 from operator import itemgetter
 logging.basicConfig(level = logging.DEBUG)
 
@@ -35,7 +37,7 @@ def get_closest_point(grid, srce, dest, avoid_enemies = True):
 
 def choose_allies(grid, ally):
     allies = sorted([ (get_distance(ally,al), al) for al in grid.allies ], key=itemgetter(0))
-    return allies[1][1] # On prend le 2ème élément car le 1er est nous-mêmes.
+    return allies[1][1] 
 
 
 def choose_humans(grid, ally):

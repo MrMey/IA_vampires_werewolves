@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 from operator import itemgetter
 logging.basicConfig(level = logging.DEBUG)
@@ -140,12 +142,12 @@ def spread(grid,ally,nb_cells, nb_ally = None):
 def get_dest(grid, ally):
     # Si il y a des humains
     #   Si le plus proche est battable, l'attaquer
-    #   Sinon, aller au 2ème plus proche, etc.
-    #   Si aucun n'est battable, aller vers l'allié le plus proche pour merger
+    #   Sinon, aller au 2Ã¨me plus proche, etc.
+    #   Si aucun n'est battable, aller vers l'alliÃ© le plus proche pour merger
     # Sinon
     #   Si l'ennemi le plus proche est battable, l'attaquer
-    #   Sinon, aller au 2ème plus proche, etc.
-    #   Si aucun n'est battable, aller vers l'allié le plus proche pour merger
+    #   Sinon, aller au 2Ã¨me plus proche, etc.
+    #   Si aucun n'est battable, aller vers l'alliÃ© le plus proche pour merger
     moves = []
     if grid.allies[ally] == 1:
         moves += choose_screening(grid,ally)
