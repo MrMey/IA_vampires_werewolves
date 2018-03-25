@@ -15,7 +15,7 @@ from algorithm import splittercell
 from algorithm import alphabeta
 from algorithm import multisplit
 
-TIME_OUT = 1.5
+TIME_OUT = 1.4
 
 class Actor:
     def __init__(self, algorithm = 1):
@@ -55,40 +55,20 @@ class Actor:
             self.thread = alphabeta.AlphabetaThread(grid)
             go_on = True
             self.thread.start()
-            sleep(TIME_OUT/3)
-            with self.thread.lock:
-                if self.thread.covered_branches == 0:
-                    go_on = False
-                    self.thread.carry_on = False
-            if go_on:
-                sleep(2*TIME_OUT / 3)
-                with self.thread.lock:
-                    if len(self.thread.global_move) > 0:
-                        dest = dict(self.thread.global_move)
-                    else:
-                        dest = None
-                logging.debug("humans: {}".format(grid.humans))
-                logging.debug("allies: {}".format(grid.allies))
-                logging.debug("enemies: {}".format(grid.enemies))
-                logging.debug("dest: {}".format(dest))
-
-                if dest is not None:
-                    for ally in dest:
-                        for destination in dest[ally]:
-                            move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
-                            if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
-                                logging.debug("ERROR!!!")
-                            logging.debug("move {}".format(move))
-                            if not (ally[0] == destination[0] and ally[1] == destination[1]):
-                                self.queue.append(move)
-            else:
-                logging.debug("switching to multisplit")
-                del self.thread
-                self.thread = None
-                temp = self.algorithm
-                self.algorithm = 4
-                self.action(grid, turn)
-                self.algorithm = temp
+            sleep(TIME_OUT)
+            logging.debug("humans: {}".format(grid.humans))
+            logging.debug("allies: {}".format(grid.allies))
+            logging.debug("enemies: {}".format(grid.enemies))
+            dest = self.thread.global_move
+            if dest is not None:
+                for ally in dest:
+                    for destination in dest[ally]:
+                        move = [ally[0], ally[1], destination[2], destination[0], destination[1]]
+                        if abs(move[0] - move[3]) > 1 or abs(move[1] - move[4]) > 1 or destination[2] > grid.allies[ally]:
+                            logging.debug("ERROR!!!")
+                        logging.debug("move {}".format(move))
+                        if not (ally[0] == destination[0] and ally[1] == destination[1]):
+                            self.queue.append(move)
         logging.debug('turn moves :\n {}'.format(self.queue))
 
 

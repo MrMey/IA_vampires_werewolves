@@ -20,7 +20,8 @@ from decision import Actor
 EMULATE_SERVER = True
 TIME_OUT = 1
 
-def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
+def execute(name, algorithm, ip, port):
+    print(ip, port)
     """
 
     :param name: name of the ai
@@ -81,7 +82,7 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
 
 
         logging.info('finishing turn {} \n elapsed time : {}s'.format(turn, time.time()-start_time))
-        time.sleep(0.5)
+
 
         turn += 1
 
@@ -89,15 +90,5 @@ def execute(name, algorithm=1, ip = "127.0.0.1", port = 9000):
 
 if __name__ == "__main__":
     args = sys.argv
-    if args[0] != 'main.py':
-        # if the program is not launched by command line then open the exe
-        os.popen("VampiresVSWerewolvesGameServer.exe")
-        execute('paul')
-    elif len(args) < 3:
-        raise(Exception('missing argument'))
-    elif len(args) == 4:
-        execute(name = args[1], ip = args[2], port = int(args[3]))
-    elif len(args) == 5:
-        execute(name = args[1], algorithm = int(args[2]), ip = args[3], port = int(args[4]))
-    elif len(args) == 6 and args[5] == "second":
-        execute(name = args[1], algorithm = int(args[2]), ip = args[3], port = int(args[4]), second_player=True)
+    execute(name = args[1], algorithm = int(args[2]), ip = args[3], port = int(args[4]))
+

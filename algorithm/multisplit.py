@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 from operator import itemgetter
 logging.basicConfig(level = logging.DEBUG)
@@ -29,7 +31,7 @@ def get_closest_point(grid, srce, dest, avoid_enemies = True, avoid_stronger_hum
                 logging.debug('destination in human range')
                 iter_pos = True
         idx += 1
-    return moves[idx-1][0], moves[idx-1][1]
+    return moves[max(0,idx-1)][0], moves[max(0,idx-1)][1]
 
 def choose_humans(grid, ally, nb_ally = None, ally_dest = []):
     if not nb_ally:
@@ -128,8 +130,11 @@ def run_away(grid,ally, nb_ally= None):
     if not nb_ally:
         nb_ally = grid.allies[ally]
     moves = grid.get_range(ally)
-    dest = [move for move in moves if move not in grid.get_enemy_range()][0]
-    return [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
+    dest = [move for move in moves if move not in grid.get_enemy_range() and grid.is_in_map(move)]
+    if len(dest) > 0:
+        dest = dest[0]
+        return [(ally[0],ally[1], nb_ally, dest[0], dest[1])]
+    return []
 
 def spread(grid,ally,nb_cells, nb_ally = None):
     if not nb_ally:
@@ -149,16 +154,15 @@ def spread(grid,ally,nb_cells, nb_ally = None):
 def get_dest(grid, ally, ally_dest):
     # Si il y a des humains
     #   Si le plus proche est battable, l'attaquer
-    #   Sinon, aller au 2ème plus proche, etc.
-    #   Si aucun n'est battable, aller vers l'allié le plus proche pour merger
+    #   Sinon, aller au 2Ã¨me plus proche, etc.
+    #   Si aucun n'est battable, aller vers l'alliÃ© le plus proche pour merger
     # Sinon
     #   Si l'ennemi le plus proche est battable, l'attaquer
-    #   Sinon, aller au 2ème plus proche, etc.
-    #   Si aucun n'est battable, aller vers l'allié le plus proche pour merger
+    #   Sinon, aller au 2Ã¨me plus proche, etc.
+    #   Si aucun n'est battable, aller vers l'alliÃ© le plus proche pour merger
     moves = []
-    if grid.allies[ally] == 1:
-        moves += choose_screening(grid,ally)
-    elif len(grid.humans) > 0:
+
+    if len(grid.humans) > 0:
         moves += choose_humans(grid, ally, ally_dest=ally_dest)
     else:
         moves += choose_enemies(grid, ally, ally_dest=ally_dest)
