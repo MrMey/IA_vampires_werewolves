@@ -2,6 +2,7 @@
 
 import itertools
 import time
+import math
 import logging
 from threading import Lock, Thread
 
@@ -14,8 +15,8 @@ DEPTH = 7
 cache = {}
 
 
-def cache_hash(humans, allies, enemies, depth, max):
-    return hash((hash(frozenset(humans.items())), hash(frozenset(allies.items())), hash(frozenset(enemies.items())), depth, max))
+def cache_hash(humans, allies, enemies, depth, is_max_turn):
+    return hash((hash(frozenset(humans.items())), hash(frozenset(allies.items())), hash(frozenset(enemies.items())), depth, is_max_turn))
 
 
 def heuristic(humans, allies, enemies, probabilistic, x_max, y_max):
@@ -91,6 +92,13 @@ class AlphabetaThread(Thread):
         if depth <= 0:
             return h
         else:
+            with self.lock:
+                if not self.carry_on:
+                    exit()
+            children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
+            if len(children) == 0:
+                # logging.debug("NO CHILDREN!!!")
+                return h
             hash_code = cache_hash(humans, allies, enemies, depth, True)
             if hash_code in cache:
                 # logging.debug("CACHE HIT")
@@ -103,14 +111,6 @@ class AlphabetaThread(Thread):
                     return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
-            with self.lock:
-                if self.carry_on:
-                    children = self.get_relevant_children(humans, allies, enemies, dimensions, False)
-                else:
-                    children = []
-            if len(children) == 0:
-                logging.debug("NO CHILDREN!!!")
-                return h
             i = 0
             move = None
             while i < len(children) and (inter[0] is None or inter[1] is None
@@ -121,7 +121,7 @@ class AlphabetaThread(Thread):
                     heu = heuristic(child[0], child[1], child[2], True, dimensions[0]-1, dimensions[1]-1)
                     val = heu
                 else:
-                    if (time.time() - self.start_time) != 0 and 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
+                    if (time.time() - self.start_time) > 0.4 and 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
                         val = self.alpha_beta_min(max(0, depth - 2), child[0], child[1], child[2], inter, dimensions)
                     else:
                         val = self.alpha_beta_min(depth - 1, child[0], child[1], child[2], inter, dimensions)
@@ -148,19 +148,18 @@ class AlphabetaThread(Thread):
         if depth <= 0:
             return h
         else:
+            with self.lock:
+                if not self.carry_on:
+                    exit()
+            children = self.get_relevant_children_enemies(humans, allies, enemies, dimensions)
+            if len(children) == 0:
+                return h
             hash_code = cache_hash(humans, allies, enemies, depth, False)
             if hash_code in cache:
                 # logging.debug("CACHE HIT")
                 return cache[hash_code][0]
             # logging.debug("CACHE MISS")
             inter = interval
-            with self.lock:
-                if self.carry_on:
-                    children = self.get_relevant_children_enemies(humans, allies, enemies, dimensions)
-                else:
-                    children = []
-            if len(children) == 0:
-                return h
             i = 0
             move = None
             while i < len(children) and (inter[0] is None or inter[1] is None
@@ -171,7 +170,7 @@ class AlphabetaThread(Thread):
                     heu = heuristic(child[0], child[1], child[2], True, dimensions[0]-1, dimensions[1]-1)
                     val = heu
                 else:
-                    if (time.time() - self.start_time) != 0 and 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
+                    if (time.time() - self.start_time) > 0.1 and 1.7 * self.covered_branches / (time.time() - self.start_time) < 1.1:
                         val = self.alpha_beta_max(max(0, depth - 2), child[0], child[1], child[2], inter, dimensions)
                     else:
                         val = self.alpha_beta_max(depth - 1, child[0], child[1], child[2], inter, dimensions)
@@ -307,22 +306,23 @@ class AlphabetaThread(Thread):
     def get_dest_alpha_beta(self):
         # logging.debug("cache length: {}".format(len(cache)))
         global DEPTH
-        DEPTH = max(1, int(8 - 1.5*(len(self.grid.allies)+len(self.grid.enemies))))
+        DEPTH = max(1, int(8 - 1.5*(len(self.grid.allies)+len(self.grid.enemies)) + 0.05*math.log(1+len(cache))))
         # print(f"allies: {len(grid.allies)}, enemies: {len(grid.enemies)})")
         # print("DEPTH: {}".format(DEPTH))
         global STRATEGIES
-        if len(self.grid.allies) >= 3:
+        """if len(self.grid.allies) >= 3:
             if "split" in STRATEGIES:
                 STRATEGIES.remove("split")
         else:
             if "split" not in STRATEGIES:
-                STRATEGIES.append("split")
+                STRATEGIES.append("split")"""
         if len(self.grid.humans) == 0:
             STRATEGIES = ["final_rounds"]
         return self.get_next_move_alpha_beta(DEPTH, self.grid)
 
     def run(self):
         self.get_dest_alpha_beta()
+        logging.debug("real decision time: {}".format(time.time() - self.start_time))
 
 
 """humans = {(1, 1): 1, (3, 2): 1}
