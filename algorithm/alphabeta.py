@@ -231,19 +231,21 @@ class AlphabetaThread(Thread):
             return inter[1]
 
     @staticmethod
-    def get_relevant_children(humans, allies, enemies, dimensions):
+    def get_relevant_children(humans, allies, enemies, dimensions, is_enemies=False):
         """
         Returns the relevant children list (using defined strategies) from this situation
         :param humans: the humans dictionary
         :param allies: the allies dictionary
         :param enemies: the enemies dictionary
         :param dimensions: the dimensions of the grid
+        :param is_enemies: boolean that tells if it's the enemies turn
         :return: a list containing the relevant children
         """
         moves = {ally: set() for ally in allies}
         min_en = min(enemies.values())
         for ally in moves:
-            if allies[ally] >= min_en:  # if the allies group is smaller than the smallest enemies group, we skip it
+            if not is_enemies or allies[ally] >= min_en:  # it's the enemies turn and the enemies group is smaller than
+                # the smallest allies group, we skip it
                 for strategy in STRATEGIES:  # uses the strategies to get all possible moves for each allies group
                     moves[ally] = moves[ally].union(
                         best_next_move_for_strategy(strategy, ally, humans, allies, enemies, [], dimensions[0] - 1,
@@ -364,8 +366,9 @@ class AlphabetaThread(Thread):
         :param dimensions: the dimensions of the grid
         :return: the relevant children list
         """
-        children_wrong_order = AlphabetaThread.get_relevant_children(humans, enemies, allies, dimensions)  # calls
-        # get_relevant_children inverting allies and enemies
+        children_wrong_order = AlphabetaThread.get_relevant_children(humans, enemies, allies, dimensions,
+                                                                     is_enemies=True)
+        # calls get_relevant_children inverting allies and enemies
         children = []
         for child in children_wrong_order:
             children.append((child[0], child[2], child[1], child[3], child[4]))  # inverts allies and enemies again
